@@ -1,19 +1,19 @@
 #include <stdio.h>
 
-void insertion_sort(int arr[], int n) {
+void insertion_sort_(int arr[], int n) {
     int i, key, j;
-    for (i = 1; i < n; i++) {
-        temp = arr[i];
+
+    for (int i = 1; i < n; i++) {
+        int selected = arr[i];
         j = i - 1;
 
-        while (j >= 0 && arr[j] > key) {
-            arr[j + 1] = arr[j];
+        while (j >= 0 && arr[j] > selected) {
+            arr[j+1] = arr[j];
             j = j - 1;
         }
-        arr[j + 1] = temp;
+        arr[j + 1] = selected;
     }
 }
-
 
 
 int binary_search(int arr[], int n, int target) {

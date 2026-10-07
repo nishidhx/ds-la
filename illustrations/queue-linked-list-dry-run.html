@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Queue using Linked List — Line-by-line Dry Run</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Schibsted+Grotesk:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef1f5; --panel:#ffffff; --ink:#0b1220; --muted:#3f4a5c; --line:#b9c2d0; --strong:#0b1220;
+  --code:#fbfcfe; --hl-line:#ffe066; --call-line:#cfdcf6;
+  --top:#f2b705; --top-ink:#0b1220;
+  --live:#0f5c55; --live-ink:#ffffff; --stale:#a3301a; --stale-bg:#ffe1d4; --read:#1a3fb0;
+  --kw:#7a1650; --num:#1a3fb0; --str:#0d6b52; --fn:#8a4b00;
+  --good:#0f5c55; --bad:#a3301a;
+  --mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --sans:"Schibsted Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45}
+#root{height:100%}
+button,input,select{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--top);outline-offset:2px}
+
+.app{display:flex;flex-direction:column;gap:10px;padding:10px 14px;max-width:1600px;margin:0 auto;min-height:100%}
+header.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+h1{font-size:21px;line-height:1.15;margin:0;font-weight:800;letter-spacing:-.015em}
+.sub{color:var(--muted);margin:2px 0 0;font-size:13px}
+.tabs{display:inline-flex;border:2px solid var(--strong);border-radius:999px;padding:2px;gap:2px;background:var(--panel)}
+.tabs button{border:0;background:none;padding:5px 14px;border-radius:999px;cursor:pointer;font-weight:700}
+.tabs button[aria-pressed="true"]{background:var(--strong);color:#fff}
+
+.layout{display:grid;gap:12px;grid-template-columns:1fr}
+.panel{background:var(--panel);border:1.5px solid var(--line);border-radius:12px}
+.codecol{display:flex;flex-direction:column;border-color:var(--strong)}
+.codehead{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;background:var(--strong);color:#fff;border-radius:10px 10px 0 0;font-family:var(--mono);font-size:13px}
+.codehead span{opacity:.85}
+.codebox{position:relative;overflow:auto;background:var(--code);border-radius:0 0 10px 10px;font-family:var(--mono);padding:6px 0;max-height:70vh}
+.ln{display:flex;align-items:center;white-space:pre;padding-right:12px;min-width:max-content;border-left:4px solid transparent;height:var(--lh,20px);font-size:var(--fs,13px);color:var(--ink)}
+.ln.blank{height:calc(var(--lh,20px) * .1)}
+.ln .no{width:38px;flex:none;text-align:right;padding-right:10px;color:#7a8597;user-select:none}
+.ln.call{background:var(--call-line);border-left-color:var(--read)}
+.ln.active{background:var(--hl-line);border-left-color:var(--strong);font-weight:600}
+.ln.active .no{color:var(--ink);font-weight:700}
+.kw{color:var(--kw);font-weight:600}.num{color:var(--num);font-weight:600}.str{color:var(--str)}.fn{color:var(--fn)}
+
+.right{display:flex;flex-direction:column;gap:10px;min-width:0}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:8px 10px}
+.btn{border:2px solid var(--strong);background:var(--panel);border-radius:9px;padding:4px 12px;cursor:pointer;font-weight:700;color:var(--ink)}
+.btn:hover{background:#e3e8f0}
+.btn.primary{background:var(--strong);color:#fff;min-width:74px}
+.btn.primary:hover{background:#26324a}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.scrub{flex:1 1 150px;display:flex;align-items:center;gap:8px;min-width:130px}
+.scrub input{flex:1;accent-color:var(--strong)}
+.count{font-family:var(--mono);font-size:13px;font-weight:600;white-space:nowrap}
+.speed{border:2px solid var(--strong);border-radius:9px;padding:3px 6px;background:var(--panel);font-weight:600}
+.playrow{display:flex;flex-wrap:wrap;align-items:center;gap:7px;flex-basis:100%;padding-top:7px;border-top:1.5px solid var(--line)}
+.playrow input{width:72px;border:2px solid var(--strong);border-radius:9px;padding:3px 8px;background:var(--panel);font-family:var(--mono);font-weight:600}
+.btn.push{background:var(--live);border-color:var(--live);color:#fff}
+.btn.pop{background:var(--stale);border-color:var(--stale);color:#fff}
+
+.explain{padding:10px 14px;min-height:96px;border-left:6px solid var(--strong)}
+.crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:5px;font-family:var(--mono);font-size:12px;margin-bottom:5px}
+.crumb{padding:1px 8px;border-radius:6px;border:1.5px solid var(--strong);font-weight:600}
+.crumb.now{background:var(--strong);color:#fff}
+.linetag{margin-left:auto;font-weight:700}
+.note{font-size:16px;font-weight:600;margin:0;white-space:pre-line;color:var(--ink)}
+.note.good{color:var(--good)}.note.bad{color:var(--bad)}
+.subnote{color:var(--muted);margin:3px 0 0;font-size:13.5px}
+.pill{display:inline-block;font-family:var(--mono);font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:6px;margin-left:8px;vertical-align:2px;color:#fff}
+.pill.t{background:var(--stale)}.pill.f{background:var(--live)}
+
+.sechead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:6px}
+.sechead h2{font-size:14px;margin:0;font-weight:800}
+.sechead small{color:var(--muted);font-family:var(--mono);font-size:12px;font-weight:600}
+.arrpanel{padding:10px 14px}
+.arr-scroll{overflow-x:auto}
+.arr{display:grid;grid-template-columns:46px repeat(5,minmax(54px,1fr));gap:6px;min-width:340px}
+.idx{text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink)}
+.cell{height:48px;border-radius:9px;border:2.5px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--mono);font-size:18px;font-weight:700;line-height:1.1;transition:background .3s,border-color .3s,color .3s}
+.cell small{font-size:10px;font-weight:600}
+.cell.empty{color:#6b7686;border-style:dashed;border-color:#9aa5b5}
+.cell.live{background:var(--live);border-color:var(--live);color:var(--live-ink)}
+.cell.live.istop{background:var(--strong);border-color:var(--strong)}
+.cell.stale{background:var(--stale-bg);border-color:var(--stale);border-style:dashed;color:var(--stale)}
+.cell.stale .v{text-decoration:line-through;text-decoration-thickness:2px}
+.cell.phantom{border:2px dashed #9aa5b5;background:transparent;color:#6b7686;font-size:13px}
+.cell.h-write{animation:pop .55s ease}
+.cell.h-read{box-shadow:0 0 0 3px #fff,0 0 0 6px var(--read)}
+.cell.h-target{box-shadow:0 0 0 3px #fff,0 0 0 6px var(--top)}
+.cell.h-ghost{animation:fade .7s ease}
+@keyframes pop{0%{transform:scale(.7);opacity:.2}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+@keyframes fade{0%{background:var(--live);border-color:var(--live);color:#fff}100%{}}
+.ptr{height:30px;display:flex;flex-direction:column;align-items:center}
+.ptr .arrow{width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:10px solid var(--strong)}
+.ptr .lbl{background:var(--top);color:var(--top-ink);border:1.5px solid var(--strong);font-family:var(--mono);font-weight:700;font-size:11.5px;padding:0 7px;border-radius:5px;margin-top:1px;white-space:nowrap}
+.memline{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 16px;font-family:var(--mono);font-size:12.5px;margin-top:6px;color:var(--ink)}
+.memline b{font-weight:700}.memline .l{color:var(--live)}.memline .s{color:var(--stale);text-decoration:line-through}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-family:var(--sans);font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.sw{width:12px;height:12px;border-radius:3px;border:2px solid;display:inline-block}
+
+.bottom{display:grid;gap:10px;grid-template-columns:1fr}
+@media (min-width:600px){.bottom{grid-template-columns:240px minmax(0,1fr)}}
+.towerpanel{padding:10px 14px;display:flex;flex-direction:column}
+.towerwrap{position:relative;flex:1;display:flex;justify-content:center;padding-top:26px;min-height:200px}
+.tower{align-self:flex-end;height:100%;max-height:232px;width:120px;margin-right:56px;border:3px solid var(--strong);border-top:0;border-radius:0 0 12px 12px;padding:5px;display:flex;flex-direction:column;gap:4px}
+.slot{position:relative;flex:1 1 0;min-height:24px;max-height:40px;border-radius:7px;display:flex;align-items:center;justify-content:space-between;padding:0 9px;font-family:var(--mono);font-weight:700;font-size:16px}
+.slot.full{background:var(--live);color:#fff}
+.slot.full.istop{background:var(--strong)}
+.slot.free{border:1.5px dashed #9aa5b5;color:#6b7686;font-size:11px;font-weight:500;justify-content:center}
+.slot .i{font-size:11px;opacity:.85;font-weight:500}
+.slot .toptag{position:absolute;left:calc(100% + 11px);background:var(--top);color:var(--top-ink);border:1.5px solid var(--strong);padding:0 6px;border-radius:5px;font-size:11.5px;white-space:nowrap}
+.slot.drop{animation:drop .5s cubic-bezier(.3,1.4,.5,1)}
+@keyframes drop{0%{transform:translateY(-60px);opacity:0}100%{transform:none;opacity:1}}
+.chip{position:absolute;top:0;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:12.5px;font-weight:700;padding:2px 10px;border-radius:999px;white-space:nowrap;color:#fff}
+.chip.out{background:var(--stale);animation:rise .9s ease}
+.chip.in{background:var(--live);animation:dropin .6s ease}
+@keyframes rise{0%{transform:translate(-50%,30px);opacity:0}100%{transform:translate(-50%,0);opacity:1}}
+@keyframes dropin{0%{transform:translate(-50%,-12px);opacity:0}100%{transform:translate(-50%,0);opacity:1}}
+.towernote{text-align:center;font-size:12px;color:var(--muted);margin-top:6px;font-weight:500}
+
+.varscol{padding:10px 14px;display:flex;flex-direction:column;min-width:0}
+.vars{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.var{border:2px solid var(--line);border-radius:9px;padding:4px 8px;font-family:var(--mono)}
+.var .k{font-size:11.5px;color:var(--muted);font-weight:600}
+.var .val{font-size:18px;font-weight:700}
+.var.changed{border-color:var(--strong);background:var(--hl-line)}
+.consolehead{margin-top:10px}
+.console{flex:1;background:#0b1220;color:#e8edf5;border-radius:9px;font-family:var(--mono);font-size:13px;min-height:90px;overflow:auto;padding:8px 12px}
+.console div{white-space:pre}
+.console .new{color:#ffe066;font-weight:700}
+.console .new::after{content:"   ◂ new";color:#9fb0c8;font-weight:500}
+.console .old{color:#c9d3e2}
+.console .none{color:#8a97ab;font-style:italic}
+.kbd{color:var(--muted);font-size:12px;margin-left:auto;white-space:nowrap}
+
+@media (min-width:980px){
+  .app{height:100%;min-height:0}
+  .layout{flex:1;min-height:0;grid-template-columns:minmax(420px,.85fr) minmax(0,1.4fr)}
+  .codecol{min-height:0}
+  .codebox{flex:1;min-height:0;max-height:none}
+  .right{min-height:0;overflow:auto}
+  .bottom{flex:1;min-height:0}
+  .towerwrap{min-height:0}
+}
+@media (min-width:980px) and (max-height:800px){
+  .app{gap:6px;padding:6px 12px}
+  .sub{display:none}
+  h1{font-size:18px}
+  .tabs button{padding:3px 12px}
+  .right,.bottom{gap:6px}
+  .layout{gap:10px}
+  .controls{padding:5px 8px}
+  .explain{min-height:78px;padding:7px 12px}
+  .note{font-size:15px}
+  .arrpanel,.towerpanel,.varscol{padding:7px 12px}
+  .cell{height:40px;font-size:16px}
+  .ptr{height:26px}
+  .towerwrap{padding-top:22px}
+  .slot{min-height:20px}
+  .var .val{font-size:16px}
+  .consolehead{margin-top:6px}
+  .console{min-height:60px}
+  .codehead{padding:4px 12px}
+}
+@media (max-width:600px){.vars{grid-template-columns:repeat(3,minmax(0,1fr))}.kbd{display:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.ty{color:#0d5a8a;font-weight:600}
+.heappanel{padding:10px 14px}
+.heap-scroll{overflow-x:auto;padding-bottom:2px}
+.chain{display:flex;align-items:flex-end;min-width:max-content;padding:0 2px 2px}
+.nodew{display:flex;flex-direction:column;align-items:center}
+.tags{display:flex;gap:4px;height:24px;align-items:flex-end;padding-bottom:3px}
+.tag{font-family:var(--mono);font-size:11.5px;font-weight:700;padding:0 7px;border-radius:5px;border:1.5px solid var(--strong);white-space:nowrap;line-height:17px}
+.tag.top{background:var(--top)}
+.tag.newNode{background:#bcd4ff}
+.tag.temp{background:#ffcfe1}
+.addr{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--muted);height:16px}
+.box{display:flex;border:2.5px solid var(--live);border-radius:9px;overflow:hidden;height:52px;background:#fff;transition:border-color .3s}
+.box .data,.box .nxt{display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--mono);line-height:1.1}
+.box small{font-size:9.5px;font-weight:600;opacity:.85}
+.box .data{background:var(--live);color:#fff;min-width:54px;font-size:19px;font-weight:700;padding:0 6px}
+.box .nxt{min-width:66px;font-size:12.5px;font-weight:700;color:var(--ink);border-left:2.5px solid var(--live);padding:0 6px}
+.nodew.istop .box{border-color:var(--strong)}
+.nodew.istop .data{background:var(--strong)}
+.nodew.istop .nxt{border-left-color:var(--strong)}
+.nodew.fresh .box{border-style:dashed;border-color:var(--read)}
+.nodew.fresh .data{background:var(--read)}
+.nodew.fresh .nxt{border-left-color:var(--read)}
+.nodew.detached .box{border-style:dashed;border-color:var(--stale);background:var(--stale-bg)}
+.nodew.detached .data{background:var(--stale-bg);color:var(--stale)}
+.nodew.detached .nxt{border-left-color:var(--stale);color:var(--stale)}
+.nodew.garbage{opacity:.45}
+.nodew.garbage .addr::after{content:" freed"}
+.nodew.hl-new .box{animation:pop .55s ease}
+.nodew.hl-node .box{box-shadow:0 0 0 3px #fff,0 0 0 6px var(--read)}
+.nodew.hl-data .data{box-shadow:inset 0 0 0 3px var(--top)}
+.nodew.hl-next .nxt{background:var(--hl-line)}
+.nodew.hl-detach .box{animation:shake .5s ease}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateY(-6px)}75%{transform:translateY(3px)}}
+.link{position:relative;width:40px;height:52px;flex:none}
+.link::before{content:"";position:absolute;left:3px;right:9px;top:50%;height:3px;background:var(--strong);transform:translateY(-50%)}
+.link::after{content:"";position:absolute;right:1px;top:50%;transform:translateY(-50%);border-left:10px solid var(--strong);border-top:7px solid transparent;border-bottom:7px solid transparent}
+.link.stale::before{background:var(--stale)}.link.stale::after{border-left-color:var(--stale)}
+.link.none{width:30px}.link.none::before,.link.none::after{display:none}
+.nullbox{height:52px;padding:0 12px;border:2.5px dashed #9aa5b5;border-radius:9px;display:flex;align-items:center;font-family:var(--mono);font-weight:700;color:#5b6678}
+.ltower{align-self:flex-end;width:132px;margin-right:56px;height:100%;max-height:300px;border:3px solid var(--strong);border-top:0;border-radius:0 0 12px 12px;padding:5px;display:flex;flex-direction:column;justify-content:flex-end;gap:4px}
+.ltower .slot{flex:0 1 36px;max-height:36px}
+.ltower .slot .i{font-size:10px}
+.ltower .emptymsg{text-align:center;font-family:var(--mono);font-size:11px;color:#6b7686;padding:8px 0}
+.vars .val{font-size:15px}
+.vars .val small{display:block;font-size:10.5px;font-weight:600;color:var(--muted)}
+.limitnote{font-size:12px;color:var(--muted)}
+.pipepanel{padding:10px 14px;display:flex;flex-direction:column;min-width:0}
+.pipewrap{position:relative;flex:1;display:flex;flex-direction:column;justify-content:center;padding-top:28px;min-height:150px}
+.pipe{display:flex;align-items:center;gap:8px;justify-content:center}
+.end{font-family:var(--mono);font-size:11.5px;font-weight:700;text-align:center;line-height:1.2;white-space:nowrap}
+.end .ar{font-size:20px;display:block}
+.tube{display:flex;gap:5px;padding:6px;border-top:3px solid var(--strong);border-bottom:3px solid var(--strong);min-width:120px;min-height:66px;align-items:center}
+.qi{width:48px;height:48px;border-radius:8px;background:var(--live);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:17px;line-height:1.1}
+.qi small{font-size:9.5px;font-weight:600;opacity:.9}
+.qi.isfront{background:var(--strong)}
+.qi.in{animation:slidein .5s ease}
+@keyframes slidein{0%{transform:translateX(40px);opacity:0}100%{transform:none;opacity:1}}
+.tube .emptymsg{font-family:var(--mono);font-size:12px;color:#6b7686;padding:0 10px;white-space:nowrap}
+.chip.deq{left:12%;transform:none;background:var(--stale);animation:outleft .9s ease}
+.chip.enq{left:auto;right:12%;transform:none;background:var(--live);animation:dropq .6s ease}
+@keyframes outleft{0%{transform:translateX(40px);opacity:0}100%{transform:none;opacity:1}}
+@keyframes dropq{0%{transform:translateY(-12px);opacity:0}100%{transform:none;opacity:1}}
+.bottom{grid-template-columns:1fr}
+@media (min-width:600px){.bottom{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr)}}
+.cm{color:#6b7686;font-style:italic}
+.tag.front{background:var(--top)}
+.tag.rear{background:#bcd4ff}
+.tag.newNode{background:#c9f2d9}
+.nodew.isfront .box{border-color:var(--strong)}
+.nodew.isfront .data{background:var(--strong)}
+.nodew.isfront .nxt{border-left-color:var(--strong)}
+.qi small{font-size:8.5px}
+.sk-foot{flex:none;display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;line-height:1;white-space:nowrap;padding:2px 0 4px;color:var(--muted)}
+.sk-chain{gap:6px;font-family:var(--mono);font-weight:700;font-size:11.5px}
+.sk-chain .sk-n{border:2px solid var(--live);border-radius:999px;padding:3px 11px;background:var(--panel);color:var(--ink)}
+.sk-chain .sk-t{background:var(--top);color:var(--top-ink);border:1.5px solid var(--strong);border-radius:5px;padding:2px 6px;font-size:10.5px}
+.sk-chain .sk-a{color:var(--live)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.7/babel.min.js"></script>
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useMemo } = React;
+const LIMIT = 7;
+const CODE = `#include <stdio.h>
+#include <stdlib.h>
+
+struct Node {
+    int data;
+    struct Node* next;
+};
+
+struct Node* front = NULL;
+struct Node* rear = NULL;
+
+// Enqueue: Insert at rear
+void enqueue(int value) {
+
+    struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
+    newNode->data = value;
+    newNode->next = NULL;
+
+    // Queue is empty
+    if (front == NULL && rear == NULL) {
+        front = rear = newNode;
+    }
+    else {
+        rear->next = newNode;
+        rear = newNode;
+    }
+}
+
+// Dequeue: Delete from front
+void dequeue() {
+
+    if (front == NULL) {
+        printf("Underflow Condition!\\n");
+        return;
+    }
+
+    struct Node* temp = front;
+
+    printf("Deleted Element: %d\\n", front->data);
+
+    front = front->next;
+
+    // Queue becomes empty
+    if (front == NULL) {
+        rear = NULL;
+    }
+
+    free(temp);
+}
+
+// Peek: Get front element
+void peek() {
+
+    if (front == NULL) {
+        printf("Queue is Empty!\\n");
+        return;
+    }
+
+    printf("Front Element: %d\\n", front->data);
+}
+
+// Display queue
+void display() {
+
+    if (front == NULL) {
+        printf("Queue is Empty!\\n");
+        return;
+    }
+
+    printf("Queue Elements: ");
+
+    struct Node* temp = front;
+
+    while (temp != NULL) {
+        printf("%d ", temp->data);
+        temp = temp->next;
+    }
+
+    printf("\\n");
+}
+
+int main() {
+
+    enqueue(10);
+    enqueue(20);
+    enqueue(30);
+    enqueue(40);
+
+    display();
+
+    peek();
+
+    dequeue();
+    dequeue();
+
+    display();
+
+    peek();
+
+    enqueue(50);
+
+    display();
+
+    return 0;
+}`;
+const LINES = CODE.split("\n");
+
+function tokenize(line) {
+  const re = /(\/\/.*$)|("(?:[^"\\]|\\.)*")|(#include|#define|\b(?:struct|int|void|if|else|return|while|break|for|do)\b)|\b(\d+)\b|\b(printf|malloc|free|sizeof)\b|\b(NULL|Node)\b|([A-Za-z_]\w*)(?=\s*\()/g;
+  const out = [];
+  let last = 0, m, k = 0;
+  while ((m = re.exec(line))) {
+    if (m.index > last) out.push(line.slice(last, m.index));
+    const cls = m[1] ? "cm" : m[2] ? "str" : m[3] ? "kw" : m[4] ? "num" : m[5] ? "fn" : m[6] ? "ty" : "fn";
+    out.push(<span key={k++} className={cls}>{m[0]}</span>);
+    last = re.lastIndex;
+  }
+  if (last < line.length) out.push(line.slice(last));
+  return out;
+}
+
+const ADDR = (i) => "0x" + (0x7a10 + i * 0x18).toString(16);
+function copyNodes(nodes) { const o = {}; for (const k in nodes) o[k] = { ...nodes[k] }; return o; }
+
+function tracer(init) {
+  const st = init
+    ? { nodes: copyNodes(init.nodes), front: init.front, rear: init.rear, out: [...init.out], open: init.open, nextId: init.nextId }
+    : { nodes: {}, front: undefined, rear: undefined, out: [], open: false, nextId: 0 };
+  st.frame = "main()"; st.vars = {}; st.callLine = null;
+  const steps = [];
+  const emit = (o) => steps.push({
+    nodes: copyNodes(st.nodes), front: st.front, rear: st.rear, out: [...st.out], open: st.open, nextId: st.nextId,
+    frame: st.frame, vars: { ...st.vars }, callLine: st.callLine, hl: null, line: null, tone: null, ...o
+  });
+  const print = (s) => { if (st.open) st.out[st.out.length - 1] += s; else { st.out.push(s); st.open = true; } };
+  const println = (s = "") => { if (st.open) st.out[st.out.length - 1] += s; else st.out.push(s); st.open = false; };
+  return { st, steps, emit, print, println };
+}
+
+const desc = (st, id) => id === null || id === undefined ? "NULL" : `${st.nodes[id].data} (${st.nodes[id].addr})`;
+const ad = (st, id) => id === null || id === undefined ? "NULL" : st.nodes[id].addr;
+function sizeOf(st) { let n = 0, c = st.front; while (c !== null && c !== undefined) { n++; c = st.nodes[c].next; } return n; }
+
+function enterMain(t, line, text) {
+  const { st, emit } = t;
+  st.frame = "main()"; st.vars = {}; st.callLine = null;
+  if (line) emit({ line, note: text });
+}
+
+function doEnqueue(t, v, line) {
+  const { st, emit } = t;
+  enterMain(t, line, `main() calls enqueue(${v}).`);
+  st.callLine = line || null; st.frame = `enqueue(${v})`; st.vars = { value: v };
+  emit({ line: 13, note: `Enter enqueue(). The parameter value = ${v}.`, sub: "No overflow check here: a linked list grows one node at a time." });
+  const id = st.nextId++;
+  st.nodes[id] = { id, addr: ADDR(id), data: "?", next: null, uninit: true };
+  st.vars.newNode = id;
+  emit({ line: 15, note: `malloc(sizeof(struct Node)) → a fresh node is allocated on the heap at ${ADDR(id)}.`, sub: "malloc does not clear the memory, so data and next hold leftover junk values (shown as ?) until the next lines set them.", hl: { id, kind: "new" } });
+  emit({ line: 15, note: `newNode = ${ADDR(id)} → the local pointer newNode stores the address of the new node.`, hl: { id, kind: "node" } });
+  st.nodes[id].data = v;
+  emit({ line: 16, note: `newNode->data = ${v} → the node now stores ${v}.`, hl: { id, kind: "data" } });
+  st.nodes[id].uninit = false;
+  emit({ line: 17, note: "newNode->next = NULL → a new node always joins at the end, so nothing comes after it.", hl: { id, kind: "next" } });
+  const empty = st.front === null && st.rear === null;
+  emit({ line: 20, note: `Empty check: front == NULL && rear == NULL\n${ad(st, st.front)} == NULL && ${ad(st, st.rear)} == NULL → ${empty}`, cond: empty,
+    sub: empty ? "The queue is empty, so this node will be both the first and the last." : "The queue already has nodes, go to the else branch." });
+  if (empty) {
+    st.front = id; st.rear = id;
+    emit({ line: 21, note: `front = rear = newNode → both point to ${v}.`, sub: "With one node, the front and the rear are the same node.", hl: { id, kind: "node" }, tone: "good", enq: v });
+  } else {
+    emit({ line: 23, note: "else → attach the new node after the current rear." });
+    const old = st.rear;
+    st.nodes[old].next = id;
+    emit({ line: 24, note: `rear->next = newNode → ${desc(st, old)} now links to ${v}.`, sub: `${v} is now reachable from front. rear itself has not moved yet.`, hl: { id: old, kind: "next" } });
+    st.rear = id;
+    emit({ line: 25, note: `rear = newNode → rear moves to ${v} (${ADDR(id)}).`, sub: `${v} joins at the back of the line. front does not change.`, hl: { id, kind: "node" }, tone: "good", enq: v });
+  }
+  emit({ line: 27, note: `enqueue(${v}) is done. Queue size is now ${sizeOf(st)}.`, sub: "newNode was a local variable, so it disappears now." });
+  st.frame = "main()"; st.vars = {}; st.callLine = null;
+}
+
+function doDequeue(t, line) {
+  const { st, emit, println } = t;
+  enterMain(t, line, "main() calls dequeue().");
+  st.callLine = line || null; st.frame = "dequeue()"; st.vars = {};
+  emit({ line: 30, note: "Enter dequeue(). Nodes always leave from the front." });
+  const empty = st.front === null;
+  emit({ line: 32, note: `Underflow check: front == NULL\n${ad(st, st.front)} == NULL → ${empty}`, cond: empty,
+    sub: empty ? "There is no node to remove." : "front points to a node, so the if-block is skipped." });
+  if (empty) {
+    println("Underflow Condition!");
+    emit({ line: 33, note: `"Underflow Condition!" is printed.`, tone: "bad" });
+    emit({ line: 34, note: "return; — nothing to delete.", tone: "bad" });
+  } else {
+    const old = st.front, v = st.nodes[old].data;
+    st.vars = { temp: old };
+    emit({ line: 37, note: `struct Node* temp = front → temp remembers the address of ${desc(st, old)}.`, sub: "front is about to move. Without temp we would lose this node and could never free it.", hl: { id: old, kind: "node" } });
+    println(`Deleted Element: ${v}`);
+    emit({ line: 39, note: `Print "Deleted Element: ${v}" (front->data).`, sub: `${v} was the first one in, so it is the first one out.`, hl: { id: old, kind: "data" } });
+    st.front = st.nodes[old].next;
+    const rearHolds = st.rear === old;
+    emit({ line: 41, note: `front = front->next → front moves to ${desc(st, st.front)}.`,
+      sub: rearHolds ? `That was the last node. front is NULL now, but rear still points to the ${v} node.` : `The ${v} node is out of the queue now. Only temp still holds its address, so we can free it.`,
+      hl: { id: old, kind: "detach" }, deq: v, tone: "bad" });
+    const nowEmpty = st.front === null;
+    emit({ line: 44, note: `Did the queue become empty? front == NULL\n${ad(st, st.front)} == NULL → ${nowEmpty}`, cond: nowEmpty,
+      sub: nowEmpty ? "Yes, so rear must be cleared too." : "No, other nodes remain, rear stays where it is." });
+    if (nowEmpty) {
+      st.rear = null;
+      emit({ line: 45, note: "rear = NULL → now both front and rear are NULL.", sub: `Without this line, rear would still point to the deleted ${v} node and the next enqueue would attach to it by mistake.` });
+    }
+    st.nodes[old].garbage = true;
+    emit({ line: 48, note: `free(temp) → the memory of the ${v} node at ${st.nodes[old].addr} is given back to the system.`, sub: "C has no automatic cleanup. If we skipped this line, the node would stay in memory forever (a memory leak).", hl: { id: old, kind: "detach" }, tone: "bad" });
+    emit({ line: 49, note: `dequeue() is done. Queue size is now ${sizeOf(st)}.`, sub: "temp was a local variable, so it disappears now." });
+    delete st.nodes[old];
+  }
+  st.frame = "main()"; st.vars = {}; st.callLine = null;
+}
+
+function doPeek(t, line) {
+  const { st, emit, println } = t;
+  enterMain(t, line, "main() calls peek().");
+  st.callLine = line || null; st.frame = "peek()"; st.vars = {};
+  emit({ line: 52, note: "Enter peek(). It shows the front node without removing it." });
+  const empty = st.front === null;
+  emit({ line: 54, note: `Empty check: front == NULL\n${ad(st, st.front)} == NULL → ${empty}`, cond: empty });
+  if (empty) {
+    println("Queue is Empty!");
+    emit({ line: 55, note: `"Queue is Empty!" is printed.`, tone: "bad" });
+    emit({ line: 56, note: "return;" });
+  } else {
+    println(`Front Element: ${st.nodes[st.front].data}`);
+    emit({ line: 59, note: `Print "Front Element: ${st.nodes[st.front].data}" (front->data).`, sub: "front and rear do not change.", hl: { id: st.front, kind: "data" } });
+    emit({ line: 60, note: "peek() is done." });
+  }
+  st.frame = "main()"; st.vars = {}; st.callLine = null;
+}
+
+function doDisplay(t, line) {
+  const { st, emit, print, println } = t;
+  enterMain(t, line, "main() calls display().");
+  st.callLine = line || null; st.frame = "display()"; st.vars = {};
+  emit({ line: 63, note: "Enter display(). It walks the list from front to rear." });
+  const empty = st.front === null;
+  emit({ line: 65, note: `Empty check: front == NULL\n${ad(st, st.front)} == NULL → ${empty}`, cond: empty });
+  if (empty) {
+    println("Queue is Empty!");
+    emit({ line: 66, note: `"Queue is Empty!" is printed.`, tone: "bad" });
+    emit({ line: 67, note: "return;" });
+  } else {
+    print("Queue Elements: ");
+    emit({ line: 70, note: `printf("Queue Elements: ") → there is no \\n at the end, so the cursor stays on the same line.` });
+    st.vars = { temp: st.front };
+    emit({ line: 72, note: `struct Node* temp = front → temp starts at ${desc(st, st.front)}.`, sub: "temp is a separate pointer, so moving it never changes front.", hl: { id: st.front, kind: "node" } });
+    const vals = [];
+    let c = st.front;
+    while (c !== null) {
+      emit({ line: 74, note: `temp != NULL → ${st.nodes[c].addr} != NULL → true.`, cond: true, hl: { id: c, kind: "node" } });
+      print(`${st.nodes[c].data} `);
+      vals.push(st.nodes[c].data);
+      emit({ line: 75, note: `printf("%d ", temp->data) → ${st.nodes[c].data}`, hl: { id: c, kind: "data" } });
+      const n = st.nodes[c].next;
+      st.vars = { temp: n };
+      emit({ line: 76, note: `temp = temp->next → temp moves to ${desc(st, n)}.`, hl: { id: c, kind: "next" } });
+      c = n;
+    }
+    emit({ line: 74, note: "temp != NULL → NULL != NULL → false. The loop ends.", cond: false });
+    st.vars = {};
+    println();
+    emit({ line: 79, note: "printf(\"\\n\") ends the current line." });
+    emit({ line: 80, note: `display() is done. Printed ${vals.join(", ")}.`, sub: "The first value enqueued comes first. That is FIFO." });
+  }
+  st.frame = "main()"; st.vars = {}; st.callLine = null;
+}
+
+function buildMain() {
+  const t = tracer(null);
+  const { st, emit } = t;
+  st.frame = "before main()";
+  st.front = null;
+  emit({ line: 9, note: "front = NULL → front will point to the node that leaves next.", sub: "front is a global pointer. No array and no fixed size. Nodes will be created one at a time on the heap with malloc()." });
+  st.rear = null;
+  emit({ line: 10, note: "rear = NULL → rear will point to the node that entered last.", sub: "front = NULL and rear = NULL together mean the queue is empty." });
+  st.frame = "main()";
+  emit({ line: 82, note: "Execution starts in main(). front and rear are both NULL, so the queue is empty." });
+  doEnqueue(t, 10, 84);
+  doEnqueue(t, 20, 85);
+  doEnqueue(t, 30, 86);
+  doEnqueue(t, 40, 87);
+  doDisplay(t, 89);
+  doPeek(t, 91);
+  doDequeue(t, 93);
+  doDequeue(t, 94);
+  doDisplay(t, 96);
+  doPeek(t, 98);
+  doEnqueue(t, 50, 100);
+  doDisplay(t, 102);
+  const vals = []; let c = st.front;
+  while (c !== null) { vals.push(st.nodes[c].data); c = st.nodes[c].next; }
+  emit({ line: 104, note: `return 0; → main() ends. Final queue (front → rear): ${vals.join(", ")}.`, sub: "No wasted space: the deleted 10 and 20 nodes were freed, unlike the array queue where their slots stay stuck." });
+  return t.steps;
+}
+
+function initPlay() {
+  const t = tracer({ nodes: {}, front: null, rear: null, out: [], open: false, nextId: 0 });
+  t.emit({ note: "A fresh, empty queue (front = NULL, rear = NULL).", sub: "Try enqueueing one value and dequeueing it, and watch why rear must be set back to NULL." });
+  return t.steps;
+}
+const UNITS = LINES.reduce((a, l) => a + (l.trim() === "" ? 0.1 : 1), 0);
+
+function CodePanel({ step }) {
+  const ref = useRef(null);
+  const [lh, setLh] = useState(20);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const fit = () => {
+      if (window.innerWidth < 980) { setLh(20); return; }
+      const h = el.clientHeight - 12;
+      setLh(Math.max(9.5, Math.min(24, h / UNITS)));
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    window.addEventListener("resize", fit);
+    return () => { ro.disconnect(); window.removeEventListener("resize", fit); };
+  }, []);
+  useEffect(() => {
+    const c = ref.current;
+    const target = step.line || step.callLine;
+    if (!c || !target || c.scrollHeight <= c.clientHeight + 2) return;
+    const el = c.querySelector(`[data-ln="${target}"]`);
+    if (!el) return;
+    const y = el.offsetTop - c.clientHeight / 2 + el.clientHeight / 2;
+    c.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+  }, [step]);
+  const fs = Math.max(9.6, Math.min(15, lh * 0.84));
+  return (
+    <div className="panel codecol">
+      <div className="codehead"><b>queue.c</b><span>{step.line ? `executing line ${step.line}` : "waiting"}</span></div>
+      <div className="codebox" ref={ref} style={{ "--lh": lh + "px", "--fs": fs + "px" }}>
+        {LINES.map((l, i) => {
+          const n = i + 1;
+          const cls = "ln" + (l.trim() === "" ? " blank" : "") + (step.line === n ? " active" : step.callLine === n ? " call" : "");
+          return (
+            <div key={n} data-ln={n} className={cls}>
+              <span className="no">{l.trim() === "" ? "" : n}</span><span>{tokenize(l)}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function chainOf(step) {
+  const ids = [];
+  let c = step.front;
+  while (c !== null && c !== undefined && step.nodes[c]) { ids.push(c); c = step.nodes[c].next; }
+  return ids;
+}
+
+function HeapView({ step }) {
+  if (step.front === undefined) {
+    return (
+      <div className="panel heappanel">
+        <div className="sechead"><h2>Heap memory</h2><small>struct Node blocks</small></div>
+        <p className="subnote" style={{ margin: "14px 0 18px" }}>front and rear have not been created yet.</p>
+      </div>
+    );
+  }
+  const chain = chainOf(step);
+  const extras = Object.keys(step.nodes).map(Number).filter((id) => !chain.includes(id));
+  const fresh = extras.filter((id) => step.vars.newNode === id);
+  const old = extras.filter((id) => step.vars.newNode !== id);
+  const refs = (id) => {
+    const t = [];
+    if (step.front === id) t.push("front");
+    if (step.rear === id) t.push("rear");
+    if (step.vars.newNode === id) t.push("newNode");
+    if ("temp" in step.vars && step.vars.temp === id) t.push("temp");
+    return t;
+  };
+  const hl = step.hl;
+  const vals = chain.map((id) => step.nodes[id].data);
+  const renderNode = (id, cls) => {
+    const n = step.nodes[id];
+    const r = refs(id);
+    let c = "nodew " + cls;
+    if ((cls === "detached" && r.length === 0) || n.garbage) c += " garbage";
+    if (hl && hl.id === id) c += " hl-" + hl.kind;
+    return (
+      <div className={c}>
+        <div className="tags">{r.map((t) => <span key={t} className={"tag " + t}>{t} ▾</span>)}</div>
+        <div className="addr">{n.addr}</div>
+        <div className="box">
+          <div className="data"><small>data</small>{n.data}</div>
+          <div className="nxt"><small>next</small>{n.uninit ? "?" : n.next === null ? "NULL" : step.nodes[n.next] ? step.nodes[n.next].addr : "?"}</div>
+        </div>
+      </div>
+    );
+  };
+  const nullTags = [];
+  if (step.front === null) nullTags.push("front");
+  if (step.rear === null) nullTags.push("rear");
+  if ("temp" in step.vars && step.vars.temp === null) nullTags.push("temp");
+  return (
+    <div className="panel heappanel">
+      <div className="sechead"><h2>Heap memory</h2><small>each box is a struct Node: data | next</small></div>
+      <div className="heap-scroll">
+        <div className="chain">
+          {old.map((id) => (
+            <React.Fragment key={id}>
+              {renderNode(id, "detached")}
+              <div className={step.nodes[id].next !== null ? "link stale" : "link none"}></div>
+            </React.Fragment>
+          ))}
+          {chain.map((id, k) => (
+            <React.Fragment key={id}>
+              {renderNode(id, k === 0 ? "isfront" + (id === step.rear ? " isrear" : "") : id === step.rear ? "isrear" : "")}
+              <div className="link"></div>
+            </React.Fragment>
+          ))}
+          <div className="nodew">
+            <div className="tags">{nullTags.map((t) => <span key={t} className={"tag " + t}>{t} ▾</span>)}</div>
+            <div className="addr"></div>
+            <div className="nullbox">NULL</div>
+          </div>
+          {fresh.map((id) => (
+            <React.Fragment key={id}>
+              <div className="link none" style={{ width: 44 }}></div>
+              {renderNode(id, "fresh")}
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+      <div className="memline">
+        <span>front → {vals.map((v, i) => <span key={i}><b className="l">{v}</b> → </span>)}NULL&nbsp;&nbsp; size = <b>{chain.length}</b></span>
+        <span className="legend">
+          <span><i className="sw" style={{ background: "var(--live)", borderColor: "var(--live)" }}></i>in queue</span>
+          <span><i className="sw" style={{ background: "var(--read)", borderColor: "var(--read)" }}></i>new, not linked yet</span>
+          <span><i className="sw" style={{ background: "var(--stale-bg)", borderColor: "var(--stale)", borderStyle: "dashed" }}></i>deleted, unreachable from front</span>
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function QueuePipe({ step, idx }) {
+  const chain = step.front === undefined ? [] : chainOf(step);
+  const justIn = step.enq != null ? step.rear : null;
+  return (
+    <div className="panel pipepanel">
+      <div className="sechead"><h2>Logical queue</h2><small>FIFO</small></div>
+      <div className="pipewrap">
+        {step.deq != null && <div key={"d" + idx} className="chip deq">← {step.deq} dequeued</div>}
+        {step.enq != null && <div key={"e" + idx} className="chip enq">{step.enq} enqueued ←</div>}
+        <div className="pipe">
+          <div className="end"><span className="ar">←</span>out<br />(front)</div>
+          <div className="tube">
+            {chain.length === 0 && <div className="emptymsg">empty</div>}
+            {chain.map((id, k) => (
+              <div key={id} className={"qi" + (k === 0 ? " isfront" : "") + (id === justIn ? " in" : "")}>
+                {step.nodes[id].data}<small>{step.nodes[id].addr}</small>
+              </div>
+            ))}
+          </div>
+          <div className="end"><span className="ar">←</span>in<br />(rear)</div>
+        </div>
+      </div>
+      <div className="towernote">Enter at the rear, leave from the front</div>
+    </div>
+  );
+}
+
+function refVal(step, id) {
+  if (id === undefined) return { v: "—" };
+  if (id === null) return { v: "NULL" };
+  const n = step.nodes[id];
+  return n ? { v: n.addr, s: `node ${n.data}` } : { v: "?" };
+}
+
+function VarsConsole({ step, prev }) {
+  const ref = useRef(null);
+  useEffect(() => { if (ref.current) ref.current.scrollTop = ref.current.scrollHeight; }, [step]);
+  const build = (s) => s ? {
+    front: refVal(s, s.front),
+    rear: refVal(s, s.rear),
+    newNode: refVal(s, s.vars.newNode),
+    temp: "temp" in s.vars ? refVal(s, s.vars.temp) : { v: "—" },
+    value: { v: s.vars.value ?? "—" },
+  } : null;
+  const cur = build(step), pv = build(prev);
+  const po = prev ? prev.out : [];
+  const isNew = (i) => i >= po.length || po[i] !== step.out[i];
+  return (
+    <div className="panel varscol">
+      <div className="sechead"><h2>Variables</h2><small>inside {step.frame}</small></div>
+      <div className="vars">
+        {Object.entries(cur).map(([k, o]) => {
+          const changed = pv && String(pv[k].v) !== String(o.v) && o.v !== "—";
+          return (
+            <div key={k} className={"var" + (changed ? " changed" : "")}>
+              <div className="k">{k}</div>
+              <div className="val">{String(o.v)}{o.s && <small>{o.s}</small>}</div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="sechead consolehead"><h2>Console output</h2></div>
+      <div className="console" ref={ref} aria-live="polite">
+        {step.out.length === 0 ? <div className="none">Nothing printed yet</div> :
+          step.out.map((o, i) => <div key={i} className={isNew(i) ? "new" : "old"}>{o}{i === step.out.length - 1 && step.open ? "▌" : ""}</div>)}
+      </div>
+    </div>
+  );
+}
+function App() {
+  const dry = useMemo(buildMain, []);
+  const [mode, setMode] = useState("dry");
+  const [dIdx, setDIdx] = useState(0);
+  const [pSteps, setPSteps] = useState(initPlay);
+  const [pIdx, setPIdx] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(1200);
+  const [input, setInput] = useState("10");
+
+  const steps = mode === "dry" ? dry : pSteps;
+  const idx = Math.min(mode === "dry" ? dIdx : pIdx, steps.length - 1);
+  const setIdx = mode === "dry" ? setDIdx : setPIdx;
+  const step = steps[idx];
+  const prev = idx > 0 ? steps[idx - 1] : null;
+  const atEnd = idx >= steps.length - 1;
+  const lastSize = chainOf(pSteps[pSteps.length - 1]).length;
+
+  useEffect(() => {
+    if (!playing) return;
+    if (atEnd) { setPlaying(false); return; }
+    const id = setTimeout(() => setIdx(idx + 1), speed);
+    return () => clearTimeout(id);
+  }, [playing, idx, atEnd, speed, mode]);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+      if (e.key === "ArrowRight") { setPlaying(false); setIdx((i) => Math.min(i + 1, steps.length - 1)); }
+      else if (e.key === "ArrowLeft") { setPlaying(false); setIdx((i) => Math.max(i - 1, 0)); }
+      else if (e.key === " ") { e.preventDefault(); setPlaying((p) => !p); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [steps, setIdx]);
+
+  const switchMode = (m) => { setPlaying(false); setMode(m); };
+
+  const runOp = (type) => {
+    const base = pSteps;
+    const t = tracer(base[base.length - 1]);
+    if (type === "enqueue") {
+      let v = parseInt(input, 10);
+      if (Number.isNaN(v)) v = Math.floor(Math.random() * 90) + 10;
+      doEnqueue(t, v, null);
+      setInput(String(v + 10));
+    } else if (type === "dequeue") doDequeue(t, null);
+    else if (type === "peek") doPeek(t, null);
+    else doDisplay(t, null);
+    setPSteps([...base, ...t.steps]);
+    setPIdx(base.length);
+    setPlaying(true);
+  };
+
+  const resetPlay = () => { setPlaying(false); setPSteps(initPlay()); setPIdx(0); setInput("10"); };
+  const crumbs = step.frame === "main()" ? ["main()"] : ["main()", step.frame];
+
+  return (
+    <div className="app">
+      <header className="top">
+        <div>
+          <h1>Queue using a linked list, line by line</h1>
+          <p className="sub">New nodes attach after rear, old nodes leave from front and get freed. First in, first out.</p>
+        </div>
+        <div className="tabs" role="group" aria-label="Mode">
+          <button aria-pressed={mode === "dry"} onClick={() => switchMode("dry")}>Dry run main()</button>
+          <button aria-pressed={mode === "play"} onClick={() => switchMode("play")}>Try it yourself</button>
+        </div>
+      </header>
+
+      <div className="layout">
+        <CodePanel step={step} />
+
+        <div className="right">
+          <div className="panel controls">
+            <button className="btn" onClick={() => { setPlaying(false); setIdx(0); }}>Restart</button>
+            <button className="btn" disabled={idx === 0} onClick={() => { setPlaying(false); setIdx(idx - 1); }}>Prev</button>
+            <button className="btn primary" disabled={atEnd && !playing} onClick={() => setPlaying(!playing)}>{playing ? "Pause" : "Play"}</button>
+            <button className="btn" disabled={atEnd} onClick={() => { setPlaying(false); setIdx(idx + 1); }}>Next</button>
+            <div className="scrub">
+              <input type="range" min="0" max={steps.length - 1} value={idx} aria-label="Step"
+                onChange={(e) => { setPlaying(false); setIdx(+e.target.value); }} />
+              <span className="count">{idx + 1} / {steps.length}</span>
+            </div>
+            <select className="speed" value={speed} onChange={(e) => setSpeed(+e.target.value)} aria-label="Speed">
+              <option value={2000}>Slow</option>
+              <option value={1200}>Normal</option>
+              <option value={600}>Fast</option>
+            </select>
+            {mode === "play" && (
+              <div className="playrow">
+                <input type="number" value={input} onChange={(e) => setInput(e.target.value)} aria-label="Value to enqueue" />
+                <button className="btn push" disabled={lastSize >= LIMIT} onClick={() => runOp("enqueue")}>enqueue({input || "?"})</button>
+                <button className="btn pop" onClick={() => runOp("dequeue")}>dequeue()</button>
+                <button className="btn" onClick={() => runOp("peek")}>peek()</button>
+                <button className="btn" onClick={() => runOp("display")}>display()</button>
+                <button className="btn" onClick={resetPlay}>New queue</button>
+                {lastSize >= LIMIT && <span className="limitnote">This demo stops at {LIMIT} nodes so the picture fits. A real linked list has no fixed limit.</span>}
+              </div>
+            )}
+          </div>
+
+          <div className="panel explain" aria-live="polite">
+            <div className="crumbs">
+              {crumbs.map((c, i) => <span key={i} className={"crumb" + (i === crumbs.length - 1 ? " now" : "")}>{c}</span>)}
+              <span className="linetag">{step.line ? `line ${step.line}` : ""}</span>
+            </div>
+            <p className={"note" + (step.tone ? " " + step.tone : "")}>
+              {step.note}
+              {step.cond !== undefined && <span className={"pill " + (step.cond ? "t" : "f")}>{step.cond ? "TRUE" : "FALSE"}</span>}
+            </p>
+            {step.sub && <p className="subnote">{step.sub}</p>}
+          </div>
+
+          <HeapView step={step} />
+
+          <div className="bottom">
+            <QueuePipe step={step} idx={idx} />
+            <VarsConsole step={step} prev={prev} />
+          </div>
+        </div>
+      </div>
+      <footer className="sk-foot sk-chain"><span className="sk-t" aria-hidden="true">front</span><span className="sk-n">© 2026</span><span className="sk-a" aria-hidden="true">→</span><span className="sk-n">Soumik Karmakar</span><span className="sk-t" aria-hidden="true">rear</span></footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

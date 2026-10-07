@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Circular Linked List — Line-by-line Dry Run</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Schibsted+Grotesk:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef1f5; --panel:#ffffff; --ink:#0b1220; --muted:#3f4a5c; --line:#b9c2d0; --strong:#0b1220;
+  --code:#fbfcfe; --hl-line:#ffe066; --call-line:#cfdcf6;
+  --top:#f2b705; --top-ink:#0b1220;
+  --live:#0f5c55; --live-ink:#ffffff; --stale:#a3301a; --stale-bg:#ffe1d4; --read:#1a3fb0;
+  --kw:#7a1650; --num:#1a3fb0; --str:#0d6b52; --fn:#8a4b00;
+  --good:#0f5c55; --bad:#a3301a;
+  --mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --sans:"Schibsted Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45}
+#root{height:100%}
+button,input,select{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--top);outline-offset:2px}
+
+.app{display:flex;flex-direction:column;gap:10px;padding:10px 14px;max-width:1600px;margin:0 auto;min-height:100%}
+header.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+h1{font-size:21px;line-height:1.15;margin:0;font-weight:800;letter-spacing:-.015em}
+.sub{color:var(--muted);margin:2px 0 0;font-size:13px}
+.tabs{display:inline-flex;border:2px solid var(--strong);border-radius:999px;padding:2px;gap:2px;background:var(--panel)}
+.tabs button{border:0;background:none;padding:5px 14px;border-radius:999px;cursor:pointer;font-weight:700}
+.tabs button[aria-pressed="true"]{background:var(--strong);color:#fff}
+
+.layout{display:grid;gap:12px;grid-template-columns:1fr}
+.panel{background:var(--panel);border:1.5px solid var(--line);border-radius:12px}
+.codecol{display:flex;flex-direction:column;border-color:var(--strong)}
+.codehead{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;background:var(--strong);color:#fff;border-radius:10px 10px 0 0;font-family:var(--mono);font-size:13px}
+.codehead span{opacity:.85}
+.codebox{position:relative;overflow:auto;background:var(--code);border-radius:0 0 10px 10px;font-family:var(--mono);padding:6px 0;max-height:70vh}
+.ln{display:flex;align-items:center;white-space:pre;padding-right:12px;min-width:max-content;border-left:4px solid transparent;height:var(--lh,20px);font-size:var(--fs,13px);color:var(--ink)}
+.ln.blank{height:calc(var(--lh,20px) * .4)}
+.ln .no{width:38px;flex:none;text-align:right;padding-right:10px;color:#7a8597;user-select:none}
+.ln.call{background:var(--call-line);border-left-color:var(--read)}
+.ln.active{background:var(--hl-line);border-left-color:var(--strong);font-weight:600}
+.ln.active .no{color:var(--ink);font-weight:700}
+.kw{color:var(--kw);font-weight:600}.num{color:var(--num);font-weight:600}.str{color:var(--str)}.fn{color:var(--fn)}
+
+.right{display:flex;flex-direction:column;gap:10px;min-width:0}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:8px 10px}
+.btn{border:2px solid var(--strong);background:var(--panel);border-radius:9px;padding:4px 12px;cursor:pointer;font-weight:700;color:var(--ink)}
+.btn:hover{background:#e3e8f0}
+.btn.primary{background:var(--strong);color:#fff;min-width:74px}
+.btn.primary:hover{background:#26324a}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.scrub{flex:1 1 150px;display:flex;align-items:center;gap:8px;min-width:130px}
+.scrub input{flex:1;accent-color:var(--strong)}
+.count{font-family:var(--mono);font-size:13px;font-weight:600;white-space:nowrap}
+.speed{border:2px solid var(--strong);border-radius:9px;padding:3px 6px;background:var(--panel);font-weight:600}
+.playrow{display:flex;flex-wrap:wrap;align-items:center;gap:7px;flex-basis:100%;padding-top:7px;border-top:1.5px solid var(--line)}
+.playrow input{width:72px;border:2px solid var(--strong);border-radius:9px;padding:3px 8px;background:var(--panel);font-family:var(--mono);font-weight:600}
+.btn.push{background:var(--live);border-color:var(--live);color:#fff}
+.btn.pop{background:var(--stale);border-color:var(--stale);color:#fff}
+
+.explain{padding:10px 14px;min-height:96px;border-left:6px solid var(--strong)}
+.crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:5px;font-family:var(--mono);font-size:12px;margin-bottom:5px}
+.crumb{padding:1px 8px;border-radius:6px;border:1.5px solid var(--strong);font-weight:600}
+.crumb.now{background:var(--strong);color:#fff}
+.linetag{margin-left:auto;font-weight:700}
+.note{font-size:16px;font-weight:600;margin:0;white-space:pre-line;color:var(--ink)}
+.note.good{color:var(--good)}.note.bad{color:var(--bad)}
+.subnote{color:var(--muted);margin:3px 0 0;font-size:13.5px}
+.pill{display:inline-block;font-family:var(--mono);font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:6px;margin-left:8px;vertical-align:2px;color:#fff}
+.pill.t{background:var(--stale)}.pill.f{background:var(--live)}
+
+.sechead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:6px}
+.sechead h2{font-size:14px;margin:0;font-weight:800}
+.sechead small{color:var(--muted);font-family:var(--mono);font-size:12px;font-weight:600}
+.arrpanel{padding:10px 14px}
+.arr-scroll{overflow-x:auto}
+.arr{display:grid;grid-template-columns:46px repeat(5,minmax(54px,1fr));gap:6px;min-width:340px}
+.idx{text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink)}
+.cell{height:48px;border-radius:9px;border:2.5px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--mono);font-size:18px;font-weight:700;line-height:1.1;transition:background .3s,border-color .3s,color .3s}
+.cell small{font-size:10px;font-weight:600}
+.cell.empty{color:#6b7686;border-style:dashed;border-color:#9aa5b5}
+.cell.live{background:var(--live);border-color:var(--live);color:var(--live-ink)}
+.cell.live.istop{background:var(--strong);border-color:var(--strong)}
+.cell.stale{background:var(--stale-bg);border-color:var(--stale);border-style:dashed;color:var(--stale)}
+.cell.stale .v{text-decoration:line-through;text-decoration-thickness:2px}
+.cell.phantom{border:2px dashed #9aa5b5;background:transparent;color:#6b7686;font-size:13px}
+.cell.h-write{animation:pop .55s ease}
+.cell.h-read{box-shadow:0 0 0 3px #fff,0 0 0 6px var(--read)}
+.cell.h-target{box-shadow:0 0 0 3px #fff,0 0 0 6px var(--top)}
+.cell.h-ghost{animation:fade .7s ease}
+@keyframes pop{0%{transform:scale(.7);opacity:.2}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+@keyframes fade{0%{background:var(--live);border-color:var(--live);color:#fff}100%{}}
+.ptr{height:30px;display:flex;flex-direction:column;align-items:center}
+.ptr .arrow{width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:10px solid var(--strong)}
+.ptr .lbl{background:var(--top);color:var(--top-ink);border:1.5px solid var(--strong);font-family:var(--mono);font-weight:700;font-size:11.5px;padding:0 7px;border-radius:5px;margin-top:1px;white-space:nowrap}
+.memline{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 16px;font-family:var(--mono);font-size:12.5px;margin-top:6px;color:var(--ink)}
+.memline b{font-weight:700}.memline .l{color:var(--live)}.memline .s{color:var(--stale);text-decoration:line-through}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-family:var(--sans);font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.sw{width:12px;height:12px;border-radius:3px;border:2px solid;display:inline-block}
+
+.bottom{display:grid;gap:10px;grid-template-columns:1fr}
+@media (min-width:600px){.bottom{grid-template-columns:240px minmax(0,1fr)}}
+.towerpanel{padding:10px 14px;display:flex;flex-direction:column}
+.towerwrap{position:relative;flex:1;display:flex;justify-content:center;padding-top:26px;min-height:200px}
+.tower{align-self:flex-end;height:100%;max-height:232px;width:120px;margin-right:56px;border:3px solid var(--strong);border-top:0;border-radius:0 0 12px 12px;padding:5px;display:flex;flex-direction:column;gap:4px}
+.slot{position:relative;flex:1 1 0;min-height:24px;max-height:40px;border-radius:7px;display:flex;align-items:center;justify-content:space-between;padding:0 9px;font-family:var(--mono);font-weight:700;font-size:16px}
+.slot.full{background:var(--live);color:#fff}
+.slot.full.istop{background:var(--strong)}
+.slot.free{border:1.5px dashed #9aa5b5;color:#6b7686;font-size:11px;font-weight:500;justify-content:center}
+.slot .i{font-size:11px;opacity:.85;font-weight:500}
+.slot .toptag{position:absolute;left:calc(100% + 11px);background:var(--top);color:var(--top-ink);border:1.5px solid var(--strong);padding:0 6px;border-radius:5px;font-size:11.5px;white-space:nowrap}
+.slot.drop{animation:drop .5s cubic-bezier(.3,1.4,.5,1)}
+@keyframes drop{0%{transform:translateY(-60px);opacity:0}100%{transform:none;opacity:1}}
+.chip{position:absolute;top:0;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:12.5px;font-weight:700;padding:2px 10px;border-radius:999px;white-space:nowrap;color:#fff}
+.chip.out{background:var(--stale);animation:rise .9s ease}
+.chip.in{background:var(--live);animation:dropin .6s ease}
+@keyframes rise{0%{transform:translate(-50%,30px);opacity:0}100%{transform:translate(-50%,0);opacity:1}}
+@keyframes dropin{0%{transform:translate(-50%,-12px);opacity:0}100%{transform:translate(-50%,0);opacity:1}}
+.towernote{text-align:center;font-size:12px;color:var(--muted);margin-top:6px;font-weight:500}
+
+.varscol{padding:10px 14px;display:flex;flex-direction:column;min-width:0}
+.vars{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.var{border:2px solid var(--line);border-radius:9px;padding:4px 8px;font-family:var(--mono)}
+.var .k{font-size:11.5px;color:var(--muted);font-weight:600}
+.var .val{font-size:18px;font-weight:700}
+.var.changed{border-color:var(--strong);background:var(--hl-line)}
+.consolehead{margin-top:10px}
+.console{flex:1;background:#0b1220;color:#e8edf5;border-radius:9px;font-family:var(--mono);font-size:13px;min-height:90px;overflow:auto;padding:8px 12px}
+.console div{white-space:pre}
+.console .new{color:#ffe066;font-weight:700}
+.console .new::after{content:"   ◂ new";color:#9fb0c8;font-weight:500}
+.console .old{color:#c9d3e2}
+.console .none{color:#8a97ab;font-style:italic}
+.kbd{color:var(--muted);font-size:12px;margin-left:auto;white-space:nowrap}
+
+@media (min-width:980px){
+  .app{height:100%;min-height:0}
+  .layout{flex:1;min-height:0;grid-template-columns:minmax(420px,.85fr) minmax(0,1.4fr)}
+  .codecol{min-height:0}
+  .codebox{flex:1;min-height:0;max-height:none}
+  .right{min-height:0;overflow:auto}
+  .bottom{flex:1;min-height:0}
+  .towerwrap{min-height:0}
+}
+@media (min-width:980px) and (max-height:800px){
+  .app{gap:6px;padding:6px 12px}
+  .sub{display:none}
+  h1{font-size:18px}
+  .tabs button{padding:3px 12px}
+  .right,.bottom{gap:6px}
+  .layout{gap:10px}
+  .controls{padding:5px 8px}
+  .explain{min-height:78px;padding:7px 12px}
+  .note{font-size:15px}
+  .arrpanel,.towerpanel,.varscol{padding:7px 12px}
+  .cell{height:40px;font-size:16px}
+  .ptr{height:26px}
+  .towerwrap{padding-top:22px}
+  .slot{min-height:20px}
+  .var .val{font-size:16px}
+  .consolehead{margin-top:6px}
+  .console{min-height:60px}
+  .codehead{padding:4px 12px}
+}
+@media (max-width:600px){.vars{grid-template-columns:repeat(3,minmax(0,1fr))}.kbd{display:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.ty{color:#0d5a8a;font-weight:600}
+.heappanel{padding:10px 14px}
+.heap-scroll{overflow-x:auto;padding-bottom:2px}
+.chain{display:flex;align-items:flex-end;min-width:max-content;padding:0 2px 2px}
+.nodew{display:flex;flex-direction:column;align-items:center}
+.tags{display:flex;gap:4px;height:24px;align-items:flex-end;padding-bottom:3px}
+.tag{font-family:var(--mono);font-size:11.5px;font-weight:700;padding:0 7px;border-radius:5px;border:1.5px solid var(--strong);white-space:nowrap;line-height:17px}
+.tag.top{background:var(--top)}
+.tag.newNode{background:#bcd4ff}
+.tag.temp{background:#ffcfe1}
+.addr{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--muted);height:16px}
+.box{display:flex;border:2.5px solid var(--live);border-radius:9px;overflow:hidden;height:52px;background:#fff;transition:border-color .3s}
+.box .data,.box .nxt{display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--mono);line-height:1.1}
+.box small{font-size:9.5px;font-weight:600;opacity:.85}
+.box .data{background:var(--live);color:#fff;min-width:54px;font-size:19px;font-weight:700;padding:0 6px}
+.box .nxt{min-width:66px;font-size:12.5px;font-weight:700;color:var(--ink);border-left:2.5px solid var(--live);padding:0 6px}
+.nodew.istop .box{border-color:var(--strong)}
+.nodew.istop .data{background:var(--strong)}
+.nodew.istop .nxt{border-left-color:var(--strong)}
+.nodew.fresh .box{border-style:dashed;border-color:var(--read)}
+.nodew.fresh .data{background:var(--read)}
+.nodew.fresh .nxt{border-left-color:var(--read)}
+.nodew.detached .box{border-style:dashed;border-color:var(--stale);background:var(--stale-bg)}
+.nodew.detached .data{background:var(--stale-bg);color:var(--stale)}
+.nodew.detached .nxt{border-left-color:var(--stale);color:var(--stale)}
+.nodew.garbage{opacity:.45}
+.nodew.garbage .addr::after{content:" freed"}
+.nodew.hl-new .box{animation:pop .55s ease}
+.nodew.hl-node .box{box-shadow:0 0 0 3px #fff,0 0 0 6px var(--read)}
+.nodew.hl-data .data{box-shadow:inset 0 0 0 3px var(--top)}
+.nodew.hl-next .nxt{background:var(--hl-line)}
+.nodew.hl-detach .box{animation:shake .5s ease}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateY(-6px)}75%{transform:translateY(3px)}}
+.link{position:relative;width:40px;height:52px;flex:none}
+.link::before{content:"";position:absolute;left:3px;right:9px;top:50%;height:3px;background:var(--strong);transform:translateY(-50%)}
+.link::after{content:"";position:absolute;right:1px;top:50%;transform:translateY(-50%);border-left:10px solid var(--strong);border-top:7px solid transparent;border-bottom:7px solid transparent}
+.link.stale::before{background:var(--stale)}.link.stale::after{border-left-color:var(--stale)}
+.link.none{width:30px}.link.none::before,.link.none::after{display:none}
+.nullbox{height:52px;padding:0 12px;border:2.5px dashed #9aa5b5;border-radius:9px;display:flex;align-items:center;font-family:var(--mono);font-weight:700;color:#5b6678}
+.ltower{align-self:flex-end;width:132px;margin-right:56px;height:100%;max-height:300px;border:3px solid var(--strong);border-top:0;border-radius:0 0 12px 12px;padding:5px;display:flex;flex-direction:column;justify-content:flex-end;gap:4px}
+.ltower .slot{flex:0 1 36px;max-height:36px}
+.ltower .slot .i{font-size:10px}
+.ltower .emptymsg{text-align:center;font-family:var(--mono);font-size:11px;color:#6b7686;padding:8px 0}
+.vars .val{font-size:15px}
+.vars .val small{display:block;font-size:10.5px;font-weight:600;color:var(--muted)}
+.limitnote{font-size:12px;color:var(--muted)}
+.tag.head{background:var(--top)}
+.tag.param{background:#ffe8a3}
+.tag.temp{background:#ffcfe1}
+.nodew.visited .data{background:var(--top);color:var(--ink)}
+.nodew.visited.istop .data{background:var(--top)}
+.bottom{grid-template-columns:1fr}
+@media (min-width:600px){.bottom{grid-template-columns:minmax(0,.9fr) minmax(0,1.2fr)}}
+.travpanel{padding:10px 14px;display:flex;flex-direction:column;min-width:0;overflow:auto}
+.trows{display:flex;flex-direction:column;gap:6px}
+.trow{display:grid;grid-template-columns:54px 64px 1fr;align-items:center;gap:8px;border:2px solid var(--line);border-radius:9px;padding:6px 10px;font-family:var(--mono);font-size:13px;font-weight:600}
+.trow .tv{font-size:17px;font-weight:700}
+.trow .ta{color:var(--muted);font-size:11.5px}
+.trow.done{border-color:var(--live);background:#e3f4f1;color:var(--live)}
+.trow.here{border-color:var(--strong);background:var(--hl-line);color:var(--ink);box-shadow:inset 4px 0 0 var(--strong)}
+.trow.wait{color:#6b7686;border-style:dashed}
+.trow.end{border-style:dashed;color:#5b6678}
+.trow.end.here{border-style:solid}
+.vars.v4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.tag.newNode{background:#bcd4ff}
+.ln.blank{height:calc(var(--lh,20px) * .1)!important}
+.cwrap{position:relative;padding-bottom:40px}
+.backedges{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.be{fill:none;stroke:var(--strong);stroke-width:2.5;stroke-linejoin:round}
+.be.stale{stroke:var(--stale);stroke-dasharray:6 4}
+.codebtns{display:flex;gap:4px}
+.cbtn{border:1.5px solid #5b6780;background:transparent;color:#cfd6e2;border-radius:6px;padding:0 8px;font-family:var(--mono);font-size:11.5px;cursor:pointer}
+.cbtn.on{background:#fff;color:var(--ink);border-color:#fff}
+.ln.folded{color:#6b7686}
+.ln .fold{background:#e3e8f0;border-radius:4px;padding:0 4px;color:var(--ink);font-weight:600}
+.ln .foldn{color:#8a94a6;font-size:.9em}
+.ln.blank{height:calc(var(--lh,20px) * .3)!important}
+.nodew.hl-detach .box{border-color:var(--stale);border-style:dashed}
+.codebox.twocol{display:grid;grid-template-columns:1.09fr .91fr;gap:0;overflow:hidden;padding:0}
+.codebox.twocol .ccol{overflow:auto;padding:6px 0;min-width:0}
+.codebox.twocol .ccol+.ccol{border-left:1.5px solid var(--line)}
+.codebox .ln .no{width:30px;padding-right:8px}
+@media (min-width:980px){.layout{grid-template-columns:minmax(560px,1fr) minmax(0,1.15fr)}}
+.link{width:30px}
+.box .data{min-width:48px}
+.box .nxt{min-width:60px}
+.sk-foot{flex:none;display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;line-height:1;white-space:nowrap;padding:2px 0 4px;color:var(--muted)}
+.sk-ring .sk-loop{width:16px;height:16px;border-radius:50%;border:2.5px solid var(--live);border-right-color:var(--top);animation:skspin 6s linear infinite}
+.sk-ring .sk-name{font-family:var(--mono);font-weight:700;color:var(--ink);border:2px solid var(--live);border-radius:999px;padding:4px 14px;background:var(--panel)}
+.sk-ring .sk-arc{font-family:var(--mono);font-weight:700;color:var(--live);font-size:14px}
+@keyframes skspin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.7/babel.min.js"></script>
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useMemo, useLayoutEffect } = React;
+const LIMIT = 6;
+const CODE = `#include <stdio.h>
+#include <stdlib.h>
+
+struct Node {
+    int data;
+    struct Node* next;
+};
+
+struct Node* head = NULL;
+
+struct Node* createNode(int value) {
+    struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
+    newNode->data = value;
+    newNode->next = NULL;
+    return newNode;
+}
+
+void addFirst(int value) {
+    struct Node* newNode = createNode(value);
+
+    if (head == NULL) {
+        head = newNode;
+        newNode->next = head;
+        return;
+    }
+
+    struct Node* temp = head;
+
+    while (temp->next != head) {
+        temp = temp->next;
+    }
+
+    newNode->next = head;
+    temp->next = newNode;
+    head = newNode;
+}
+
+void addLast(int value) {
+    struct Node* newNode = createNode(value);
+
+    if (head == NULL) {
+        head = newNode;
+        newNode->next = head;
+        return;
+    }
+
+    struct Node* temp = head;
+
+    while (temp->next != head) {
+        temp = temp->next;
+    }
+
+    temp->next = newNode;
+    newNode->next = head;
+}
+
+void deleteFirst() {
+    if (head == NULL) {
+        return;
+    }
+
+    if (head->next == head) {
+        free(head);
+        head = NULL;
+        return;
+    }
+
+    struct Node* temp = head;
+
+    while (temp->next != head) {
+        temp = temp->next;
+    }
+
+    struct Node* del = head;
+    head = head->next;
+    temp->next = head;
+    free(del);
+}
+
+void deleteLast() {
+    if (head == NULL) {
+        return;
+    }
+
+    if (head->next == head) {
+        free(head);
+        head = NULL;
+        return;
+    }
+
+    struct Node* temp = head;
+
+    while (temp->next->next != head) {
+        temp = temp->next;
+    }
+
+    free(temp->next);
+    temp->next = head;
+}
+
+void display() {
+    if (head == NULL) {
+        return;
+    }
+
+    struct Node* temp = head;
+
+    do {
+        printf("%d ", temp->data);
+        temp = temp->next;
+    } while (temp != head);
+
+    printf("\\n");
+}
+
+int main() {
+
+    addFirst(30);
+    addFirst(20);
+    addFirst(10);
+
+    display();
+
+    addLast(40);
+    addLast(50);
+
+    display();
+
+    deleteFirst();
+
+    display();
+
+    deleteLast();
+
+    display();
+
+    return 0;
+}`;
+const LINES = CODE.split("\n");
+const FOLDS = [[11, 16], [18, 36], [38, 55], [57, 78], [80, 99], [101, 114], [116, 138]];
+
+function tokenize(line) {
+  const re = /("(?:[^"\\]|\\.)*")|(#include|#define|\b(?:typedef|struct|int|void|if|else|return|while|break|for|do)\b)|\b(\d+)\b|\b(printf|malloc|free|sizeof)\b|\b(NULL|Node)\b|([A-Za-z_]\w*)(?=\s*\()/g;
+  const out = [];
+  let last = 0, m, k = 0;
+  while ((m = re.exec(line))) {
+    if (m.index > last) out.push(line.slice(last, m.index));
+    const cls = m[1] ? "str" : m[2] ? "kw" : m[3] ? "num" : m[4] ? "fn" : m[5] ? "ty" : "fn";
+    out.push(<span key={k++} className={cls}>{m[0]}</span>);
+    last = re.lastIndex;
+  }
+  if (last < line.length) out.push(line.slice(last));
+  return out;
+}
+
+const ADDR = (i) => "0x" + (0x7a10 + i * 0x18).toString(16);
+function copyNodes(nodes) { const o = {}; for (const k in nodes) o[k] = { ...nodes[k] }; return o; }
+
+function tracer(init) {
+  const st = init
+    ? { nodes: copyNodes(init.nodes), head: init.head, out: [...init.out], open: init.open, nextId: init.nextId }
+    : { nodes: {}, head: undefined, out: [], open: false, nextId: 0 };
+  st.frame = "main()"; st.vars = {}; st.callLine = null; st.printed = [];
+  const steps = [];
+  const emit = (o) => steps.push({
+    nodes: copyNodes(st.nodes), head: st.head, out: [...st.out], open: st.open, nextId: st.nextId,
+    frame: st.frame, vars: { ...st.vars }, callLine: st.callLine, printed: [...st.printed],
+    hl: null, line: null, tone: null, ...o
+  });
+  const print = (s) => { if (st.open) st.out[st.out.length - 1] += s; else { st.out.push(s); st.open = true; } };
+  const println = (s = "") => { if (st.open) st.out[st.out.length - 1] += s; else st.out.push(s); st.open = false; };
+  return { st, steps, emit, print, println };
+}
+
+const ad = (st, id) => id === null || id === undefined ? "NULL" : st.nodes[id].addr;
+const desc = (st, id) => id === null || id === undefined ? "NULL" : `${st.nodes[id].data} (${st.nodes[id].addr})`;
+const dv = (st, id) => st.nodes[id].data;
+function circleIds(s) {
+  const ids = [], seen = new Set();
+  let c = s.head;
+  while (c !== null && c !== undefined && s.nodes[c] && !seen.has(c)) { ids.push(c); seen.add(c); c = s.nodes[c].next; }
+  return ids;
+}
+const listStr = (st) => { const v = circleIds(st).map((id) => st.nodes[id].data); return v.length ? v.join(" → ") + " → back to " + v[0] : "empty"; };
+
+function enter(t, line, frame, text, vars = {}) {
+  const { st, emit } = t;
+  st.frame = "main()"; st.vars = {}; st.callLine = null;
+  if (line) emit({ line, note: text });
+  st.callLine = line || null; st.frame = frame; st.vars = vars;
+}
+
+function finish(t) {
+  const { st } = t;
+  const keep = new Set(circleIds(st));
+  for (const k of Object.keys(st.nodes)) if (!keep.has(Number(k))) delete st.nodes[k];
+  st.frame = "main()"; st.vars = {}; st.callLine = null;
+}
+
+function createNode(t, v, line) {
+  const { st, emit } = t;
+  const id = st.nextId++;
+  emit({ line, note: `createNode(${v}) is called to build the new node. Its result will be stored in newNode.` });
+  const back = st.frame, bv = { ...st.vars };
+  st.frame = `createNode(${v})`; st.vars = { value: v };
+  emit({ line: 11, note: `Enter createNode(). value = ${v}.` });
+  st.nodes[id] = { id, addr: ADDR(id), data: "?", next: null, uninit: true };
+  st.vars.newNode = id;
+  emit({ line: 12, note: `malloc(sizeof(struct Node)) → a fresh node is allocated on the heap at ${ADDR(id)}.`, sub: "malloc does not clear the memory, so the fields hold leftover junk values (shown as ?) until the next lines set them.", hl: { id, kind: "new" } });
+  st.nodes[id].data = v;
+  emit({ line: 13, note: `newNode->data = value → the node now stores ${v}.`, hl: { id, kind: "data" } });
+  st.nodes[id].uninit = false;
+  emit({ line: 14, note: "newNode->next = NULL → the node is not connected to anything yet.", hl: { id, kind: "next" } });
+  emit({ line: 15, note: `return newNode → the address ${ADDR(id)} goes back to the caller.` });
+  st.frame = back; st.vars = { ...bv, newNode: id };
+  emit({ line, note: `newNode = ${ADDR(id)} → the local pointer newNode points to the new node.`, hl: { id, kind: "node" } });
+  return id;
+}
+
+function walkToLast(t, condLine, moveLine) {
+  const { st, emit } = t;
+  let c = st.head;
+  while (true) {
+    const nx = st.nodes[c].next, go = nx !== st.head;
+    emit({ line: condLine, note: `temp->next != head\n${ad(st, nx)} != ${ad(st, st.head)} → ${go}`, cond: go,
+      sub: go ? `temp (${dv(st, c)}) is not the last node yet.` : `temp (${dv(st, c)}) points back to head, so it is the last node. Stop here.`, hl: { id: c, kind: "next" } });
+    if (!go) return c;
+    c = nx; st.vars.temp = c;
+    emit({ line: moveLine, note: `temp = temp->next → temp moves to ${desc(st, c)}.`, hl: { id: c, kind: "node" } });
+  }
+}
+
+function doAddFirst(t, v, line) {
+  const { st, emit } = t;
+  enter(t, line, `addFirst(${v})`, `main() calls addFirst(${v}).`, { value: v });
+  emit({ line: 18, note: `Enter addFirst(). value = ${v}.`, sub: "In a circular list the last node points to head, so adding a new head also means updating the last node." });
+  const id = createNode(t, v, 19);
+  const empty = st.head === null;
+  emit({ line: 21, note: `Empty check: head == NULL\n${ad(st, st.head)} == NULL → ${empty}`, cond: empty,
+    sub: empty ? "The list is empty, so this node will be the whole circle." : "The list has nodes, so we must first find the last one." });
+  if (empty) {
+    st.head = id;
+    emit({ line: 22, note: `head = newNode → head points to ${v}.`, hl: { id, kind: "node" } });
+    st.nodes[id].next = id;
+    emit({ line: 23, note: `newNode->next = head → ${v} points to itself.`, sub: "A one-node circle: its next is itself, not NULL.", hl: { id, kind: "next" }, tone: "good" });
+    emit({ line: 24, note: "return; — done." });
+    finish(t); return;
+  }
+  st.vars.temp = st.head;
+  emit({ line: 27, note: `struct Node* temp = head → temp starts at ${desc(st, st.head)}.`, hl: { id: st.head, kind: "node" } });
+  const last = walkToLast(t, 29, 30);
+  st.nodes[id].next = st.head;
+  emit({ line: 33, note: `newNode->next = head → ${v} now points to ${desc(st, st.head)}.`, sub: `The last node (${dv(st, last)}) still points to the old head. That changes next.`, hl: { id, kind: "next" } });
+  st.nodes[last].next = id;
+  emit({ line: 34, note: `temp->next = newNode → the last node (${dv(st, last)}) now points to ${v}.`, sub: "The circle now passes through the new node.", hl: { id: last, kind: "next" } });
+  st.head = id;
+  emit({ line: 35, note: `head = newNode → head moves to ${v}.`, sub: `List: ${listStr(st)}`, hl: { id, kind: "node" }, tone: "good" });
+  emit({ line: 36, note: `addFirst(${v}) is done.`, sub: "Unlike a normal list, this is O(n): we had to walk to the last node to fix its next." });
+  finish(t);
+}
+
+function doAddLast(t, v, line) {
+  const { st, emit } = t;
+  enter(t, line, `addLast(${v})`, `main() calls addLast(${v}).`, { value: v });
+  emit({ line: 38, note: `Enter addLast(). value = ${v}.` });
+  const id = createNode(t, v, 39);
+  const empty = st.head === null;
+  emit({ line: 41, note: `Empty check: head == NULL\n${ad(st, st.head)} == NULL → ${empty}`, cond: empty,
+    sub: empty ? "The list is empty, so this node will be the whole circle." : "The list has nodes, so we must find the last one." });
+  if (empty) {
+    st.head = id;
+    emit({ line: 42, note: `head = newNode → head points to ${v}.`, hl: { id, kind: "node" } });
+    st.nodes[id].next = id;
+    emit({ line: 43, note: `newNode->next = head → ${v} points to itself.`, hl: { id, kind: "next" }, tone: "good" });
+    emit({ line: 44, note: "return; — done." });
+    finish(t); return;
+  }
+  st.vars.temp = st.head;
+  emit({ line: 47, note: `struct Node* temp = head → temp starts at ${desc(st, st.head)}.`, hl: { id: st.head, kind: "node" } });
+  const last = walkToLast(t, 49, 50);
+  st.nodes[last].next = id;
+  emit({ line: 53, note: `temp->next = newNode → ${dv(st, last)} now points to ${v}.`, sub: `The circle is broken for a moment: ${v}'s next is still NULL.`, hl: { id: last, kind: "next" } });
+  st.nodes[id].next = st.head;
+  emit({ line: 54, note: `newNode->next = head → ${v} points back to ${dv(st, st.head)}.`, sub: `The circle is closed again. List: ${listStr(st)}`, hl: { id, kind: "next" }, tone: "good" });
+  emit({ line: 55, note: `addLast(${v}) is done. O(n) because of the walk.` });
+  finish(t);
+}
+
+function doDeleteFirst(t, line) {
+  const { st, emit } = t;
+  enter(t, line, "deleteFirst()", "main() calls deleteFirst().");
+  emit({ line: 57, note: "Enter deleteFirst()." });
+  const empty = st.head === null;
+  emit({ line: 58, note: `Empty check: head == NULL\n${ad(st, st.head)} == NULL → ${empty}`, cond: empty, sub: empty ? "Nothing to delete." : "The list has nodes, so the if-block is skipped." });
+  if (empty) { emit({ line: 59, note: "return;", tone: "bad" }); finish(t); return; }
+  const single = st.nodes[st.head].next === st.head;
+  emit({ line: 62, note: `Only one node? head->next == head\n${ad(st, st.nodes[st.head].next)} == ${ad(st, st.head)} → ${single}`, cond: single,
+    sub: single ? "The node points to itself, so it is the only one." : "More than one node." });
+  if (single) {
+    const old = st.head;
+    st.nodes[old].garbage = true;
+    emit({ line: 63, note: `free(head) → the memory of the ${dv(st, old)} node at ${st.nodes[old].addr} is given back to the system.`, sub: "head still holds the old address for a moment. Using it now would be a bug (a dangling pointer).", hl: { id: old, kind: "detach" }, tone: "bad" });
+    st.head = null;
+    emit({ line: 64, note: "head = NULL → the list is now empty.", sub: "Setting head to NULL right after free() means it no longer points to freed memory.", tone: "bad" });
+    emit({ line: 65, note: "return;" });
+    finish(t); return;
+  }
+  st.vars = { temp: st.head };
+  emit({ line: 68, note: `struct Node* temp = head → temp starts at ${desc(st, st.head)}.`, sub: "We need the last node, because it points to the head we are about to remove.", hl: { id: st.head, kind: "node" } });
+  const last = walkToLast(t, 70, 71);
+  const old = st.head, v = dv(st, old);
+  st.vars.del = old;
+  emit({ line: 74, note: `struct Node* del = head → del remembers the address of ${desc(st, old)}.`, sub: "head is about to move. Without del we would lose this node and could never free it.", hl: { id: old, kind: "node" } });
+  st.head = st.nodes[old].next;
+  emit({ line: 75, note: `head = head->next → head moves to ${desc(st, st.head)}.`, sub: `The ${v} node is still in the circle: the last node (${dv(st, last)}) still points to it.`, hl: { id: old, kind: "detach" }, tone: "bad" });
+  st.nodes[last].next = st.head;
+  emit({ line: 76, note: `temp->next = head → the last node (${dv(st, last)}) now points to ${dv(st, st.head)}.`, sub: `Now nothing in the circle points to the ${v} node. Only del still holds its address. List: ${listStr(st)}`, hl: { id: last, kind: "next" }, tone: "bad" });
+  st.nodes[old].garbage = true;
+  emit({ line: 77, note: `free(del) → the memory of the ${v} node at ${st.nodes[old].addr} is given back to the system.`, sub: "C has no automatic cleanup. If we skipped this line, the node would stay in memory forever (a memory leak).", hl: { id: old, kind: "detach" }, tone: "bad" });
+  emit({ line: 78, note: "deleteFirst() is done. O(n) because of the walk to the last node." });
+  finish(t);
+}
+
+function doDeleteLast(t, line) {
+  const { st, emit } = t;
+  enter(t, line, "deleteLast()", "main() calls deleteLast().");
+  emit({ line: 80, note: "Enter deleteLast()." });
+  const empty = st.head === null;
+  emit({ line: 81, note: `Empty check: head == NULL\n${ad(st, st.head)} == NULL → ${empty}`, cond: empty, sub: empty ? "Nothing to delete." : "The list has nodes, so the if-block is skipped." });
+  if (empty) { emit({ line: 82, note: "return;", tone: "bad" }); finish(t); return; }
+  const single = st.nodes[st.head].next === st.head;
+  emit({ line: 85, note: `Only one node? head->next == head\n${ad(st, st.nodes[st.head].next)} == ${ad(st, st.head)} → ${single}`, cond: single,
+    sub: single ? "The node points to itself, so it is the only one." : "More than one node, so we need the second-to-last node." });
+  if (single) {
+    const old = st.head;
+    st.nodes[old].garbage = true;
+    emit({ line: 86, note: `free(head) → the memory of the ${dv(st, old)} node at ${st.nodes[old].addr} is given back to the system.`, sub: "head still holds the old address for a moment. Using it now would be a bug (a dangling pointer).", hl: { id: old, kind: "detach" }, tone: "bad" });
+    st.head = null;
+    emit({ line: 87, note: "head = NULL → the list is now empty.", sub: "Setting head to NULL right after free() means it no longer points to freed memory.", tone: "bad" });
+    emit({ line: 88, note: "return;" });
+    finish(t); return;
+  }
+  st.vars = { temp: st.head };
+  emit({ line: 91, note: `struct Node* temp = head → temp starts at ${desc(st, st.head)}.`, hl: { id: st.head, kind: "node" } });
+  let c = st.head;
+  while (true) {
+    const n1 = st.nodes[c].next, n2 = st.nodes[n1].next, go = n2 !== st.head;
+    emit({ line: 93, note: `temp->next->next != head\ntemp->next is ${dv(st, n1)}, its next is ${ad(st, n2)} → ${go}`, cond: go,
+      sub: go ? "Two steps ahead is not head yet, keep walking." : `${dv(st, n1)} points back to head, so it is the last node and temp (${dv(st, c)}) is second-to-last.`, hl: { id: n1, kind: "next" } });
+    if (!go) break;
+    c = n1; st.vars.temp = c;
+    emit({ line: 94, note: `temp = temp->next → temp moves to ${desc(st, c)}.`, hl: { id: c, kind: "node" } });
+  }
+  const lastId = st.nodes[c].next, v = dv(st, lastId);
+  st.nodes[lastId].garbage = true;
+  emit({ line: 97, note: `free(temp->next) → the memory of the last node (${v}) at ${st.nodes[lastId].addr} is given back to the system.`, sub: "temp->next still holds the old address, so the next line must replace it.", hl: { id: lastId, kind: "detach" }, tone: "bad" });
+  st.nodes[c].next = st.head;
+  emit({ line: 98, note: `temp->next = head → ${dv(st, c)} now points straight back to ${dv(st, st.head)}.`, sub: `The freed ${v} node is skipped, so the circle is closed again.`, hl: { id: c, kind: "next" }, tone: "bad" });
+  emit({ line: 99, note: "deleteLast() is done. O(n).", sub: `List: ${listStr(st)}` });
+  finish(t);
+}
+
+function doDisplay(t, line) {
+  const { st, emit, print, println } = t;
+  enter(t, line, "display()", "main() calls display().");
+  st.printed = [];
+  emit({ line: 101, note: "Enter display()." });
+  const empty = st.head === null;
+  emit({ line: 102, note: `Empty check: head == NULL\n${ad(st, st.head)} == NULL → ${empty}`, cond: empty,
+    sub: empty ? "Nothing to print." : "This check matters: the do-while below would crash on an empty list." });
+  if (empty) { emit({ line: 103, note: "return; — nothing is printed." }); finish(t); return; }
+  st.vars = { temp: st.head };
+  emit({ line: 106, note: `struct Node* temp = head → temp starts at ${desc(st, st.head)}.`, hl: { id: st.head, kind: "node" } });
+  let c = st.head, first = true;
+  while (true) {
+    emit({ line: 108, note: first ? "do { → the body runs once before any check." : "Back to the top of the do block.", sub: first ? "A plain while (temp != head) would stop immediately, because temp starts equal to head." : null });
+    first = false;
+    print(`${dv(st, c)} `);
+    st.printed.push(c);
+    emit({ line: 109, note: `printf("%d ", temp->data) → ${dv(st, c)}`, hl: { id: c, kind: "data" }, tone: "good" });
+    c = st.nodes[c].next; st.vars.temp = c;
+    emit({ line: 110, note: `temp = temp->next → temp moves to ${desc(st, c)}.`, hl: { id: c, kind: "node" } });
+    const go = c !== st.head;
+    emit({ line: 111, note: `while (temp != head)\n${ad(st, c)} != ${ad(st, st.head)} → ${go}`, cond: go,
+      sub: go ? "Not back at the start yet, run the body again." : "temp has come full circle back to head. Stop." });
+    if (!go) break;
+  }
+  println();
+  emit({ line: 113, note: "printf(\"\\n\") ends the line." });
+  emit({ line: 114, note: "display() is done.", sub: `List: ${listStr(st)}` });
+  st.printed = [];
+  finish(t);
+}
+
+function buildMain() {
+  const t = tracer(null);
+  const { st, emit } = t;
+  st.head = null;
+  emit({ line: 9, note: "struct Node* head = NULL; → head is a global pointer, set up before main() runs.", sub: "NULL means it points to nothing, so the list starts empty." });
+  emit({ line: 116, note: "Execution starts in main()." });
+  doAddFirst(t, 30, 118);
+  doAddFirst(t, 20, 119);
+  doAddFirst(t, 10, 120);
+  doDisplay(t, 122);
+  doAddLast(t, 40, 124);
+  doAddLast(t, 50, 125);
+  doDisplay(t, 127);
+  doDeleteFirst(t, 129);
+  doDisplay(t, 131);
+  doDeleteLast(t, 133);
+  doDisplay(t, 135);
+  emit({ line: 137, note: "return 0; → main() ends.", sub: `Final list: ${listStr(st)}` });
+  return t.steps;
+}
+
+function initPlay() {
+  const t = tracer({ nodes: {}, head: null, out: [], open: false, nextId: 0 });
+  t.emit({ note: "An empty list (head = NULL).", sub: "Add one node and watch it point to itself. Then add and delete at either end." });
+  return t.steps;
+}
+function unitsOf(a, b) {
+  let u = 0;
+  for (let n = a; n <= b; n++) u += LINES[n - 1].trim() === "" ? 0.3 : 1;
+  return u;
+}
+const SPLIT = (() => {
+  let best = null;
+  for (const [s] of FOLDS) {
+    if (s < 20) continue;
+    const m = Math.max(unitsOf(1, s - 1), unitsOf(s, LINES.length));
+    if (!best || m < best.m) best = { s, m };
+  }
+  return best;
+})();
+
+function CodePanel({ step }) {
+  const ref = useRef(null);
+  const [avail, setAvail] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const fit = () => setAvail(window.innerWidth < 980 ? 0 : el.clientHeight - 14);
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const two = avail > 0;
+  const cols = two ? [[1, SPLIT.s - 1], [SPLIT.s, LINES.length]] : [[1, LINES.length]];
+  const lh = two ? Math.max(10.5, Math.min(22, avail / SPLIT.m)) : 20;
+  const fs = Math.max(10.5, Math.min(14, lh * 0.74));
+  useEffect(() => {
+    const c = ref.current;
+    const target = step.line || step.callLine;
+    if (!c || !target) return;
+    const el = c.querySelector(`[data-ln="${target}"]`);
+    if (!el) return;
+    const col = el.closest(".ccol");
+    if (!col || col.scrollHeight <= col.clientHeight + 2) return;
+    col.scrollTo({ top: Math.max(0, el.offsetTop - col.clientHeight / 2), behavior: "smooth" });
+  }, [step]);
+  return (
+    <div className="panel codecol">
+      <div className="codehead"><b>main.c</b><span>{step.line ? `executing line ${step.line}` : ""}</span></div>
+      <div className={"codebox" + (two ? " twocol" : "")} ref={ref} style={{ "--lh": lh + "px", "--fs": fs + "px" }}>
+        {cols.map(([a, b]) => (
+          <div className="ccol" key={a}>
+            {LINES.slice(a - 1, b).map((l, i) => {
+              const n = a + i;
+              const blank = l.trim() === "";
+              const cls = "ln" + (blank ? " blank" : "") + (step.line === n ? " active" : step.callLine === n ? " call" : "");
+              return (
+                <div key={n} data-ln={n} className={cls}>
+                  <span className="no">{blank ? "" : n}</span><span>{tokenize(l)}</span>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+const chainOf = circleIds;
+
+function HeapView({ step }) {
+  const chain = chainOf(step);
+  const extras = Object.keys(step.nodes).map(Number).filter((id) => !chain.includes(id));
+  const hasTemp = "temp" in step.vars;
+  const leftSide = step.frame.startsWith("addFirst") || step.frame.startsWith("deleteFirst");
+  const left = leftSide ? extras : [];
+  const right = leftSide ? [] : extras;
+  const items = [...left, ...chain, ...right];
+  const boxRefs = useRef({});
+  const wrapRef = useRef(null);
+  const [edges, setEdges] = useState([]);
+  const tagsFor = (id) => {
+    const t = [];
+    if (step.head === id) t.push(["head", "head"]);
+    if (step.vars.newNode === id) t.push(["newNode", "newNode"]);
+    if (hasTemp && step.vars.temp === id) t.push(["temp", "temp"]);
+    if ("del" in step.vars && step.vars.del === id) t.push(["temp del", "del"]);
+    return t;
+  };
+  const inCircle = (id) => chain.includes(id);
+  const isGone = (id) => id !== null && id !== undefined && !inCircle(id) && step.vars.newNode !== id;
+  const back = [];
+  items.forEach((id, k) => {
+    const nx = step.nodes[id].next;
+    if (nx !== null && nx !== items[k + 1] && step.nodes[nx]) back.push({ from: id, to: nx, stale: isGone(id) || isGone(nx) });
+  });
+  const sig = JSON.stringify([items, back, step.head]);
+  useLayoutEffect(() => {
+    const measure = () => {
+      const w = wrapRef.current;
+      if (!w) return;
+      const wr = w.getBoundingClientRect();
+      let maxB = 0;
+      for (const id of items) { const el = boxRefs.current[id]; if (el) maxB = Math.max(maxB, el.getBoundingClientRect().bottom - wr.top); }
+      setEdges(back.map((e, i) => {
+        const a = boxRefs.current[e.from], b = boxRefs.current[e.to];
+        if (!a || !b) return null;
+        const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+        const x1 = ra.right - wr.left, y1 = ra.top + ra.height / 2 - wr.top;
+        const x2 = rb.left + rb.width / 2 - wr.left, y2 = rb.bottom - wr.top + 3;
+        const lane = maxB + 12 + i * 9;
+        return { d: `M ${x1} ${y1} H ${x1 + 12} V ${lane} H ${x2} V ${y2}`, stale: e.stale };
+      }).filter(Boolean));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (wrapRef.current) ro.observe(wrapRef.current);
+    return () => ro.disconnect();
+  }, [sig]);
+  const hl = step.hl;
+  const node = (id) => {
+    const n = step.nodes[id];
+    let c = "nodew";
+    if (!inCircle(id)) c += step.vars.newNode === id ? " fresh" : " detached" + (tagsFor(id).length ? "" : " garbage");
+    if (n.garbage && !c.includes("garbage")) c += " garbage";
+    else if (step.head === id) c += " istop";
+    if (hl && hl.id === id) c += " hl-" + hl.kind;
+    if (step.printed.includes(id)) c += " visited";
+    return (
+      <div className={c}>
+        <div className="tags">{tagsFor(id).map(([k, l]) => <span key={k} className={"tag " + k}>{l} ▾</span>)}</div>
+        <div className="addr">{n.addr}</div>
+        <div className="box" ref={(el) => { boxRefs.current[id] = el; }}>
+          <div className="data"><small>data</small>{n.data}</div>
+          <div className="nxt"><small>next</small>{n.uninit ? "?" : n.next === null ? "NULL" : step.nodes[n.next] ? step.nodes[n.next].addr : "?"}</div>
+        </div>
+      </div>
+    );
+  };
+  const vals = chain.map((id) => step.nodes[id].data);
+  return (
+    <div className="panel heappanel">
+      <div className="sechead"><h2>Heap memory</h2><small>the last node's next loops back to head</small></div>
+      <div className="heap-scroll">
+        <div className="chain cwrap" ref={wrapRef}>
+          {step.head === null && items.length === 0 && (
+            <div className="nodew">
+              <div className="tags"><span className="tag head">head ▾</span></div>
+              <div className="addr"></div>
+              <div className="nullbox">NULL</div>
+            </div>
+          )}
+          {step.head === null && items.length > 0 && (
+            <>
+              <div className="nodew">
+                <div className="tags"><span className="tag head">head ▾</span></div>
+                <div className="addr"></div>
+                <div className="nullbox">NULL</div>
+              </div>
+              <div className="link none"></div>
+            </>
+          )}
+          {items.map((id, k) => {
+            const nx = step.nodes[id].next;
+            const adj = nx !== null && nx === items[k + 1];
+            const stale = adj && (isGone(id) || isGone(nx));
+            return (
+              <React.Fragment key={id}>
+                {node(id)}
+                {k < items.length - 1 && <div className={adj ? "link" + (stale ? " stale" : "") : "link none"}></div>}
+              </React.Fragment>
+            );
+          })}
+          <svg className="backedges" aria-hidden="true">
+            <defs>
+              <marker id="up" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--strong)" /></marker>
+              <marker id="upr" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--stale)" /></marker>
+            </defs>
+            {edges.map((e, i) => <path key={i} d={e.d} className={"be" + (e.stale ? " stale" : "")} markerEnd={e.stale ? "url(#upr)" : "url(#up)"} />)}
+          </svg>
+        </div>
+      </div>
+      <div className="memline">
+        <span>{vals.length ? <>head → {vals.map((v, i) => <span key={i}><b className="l">{v}</b> → </span>)}<b className="l">{vals[0]}</b> …</> : "head → null"}&nbsp;&nbsp; nodes = <b>{chain.length}</b></span>
+        <span className="legend">
+          <span><i className="sw" style={{ background: "var(--strong)", borderColor: "var(--strong)" }}></i>head node</span>
+          <span><i className="sw" style={{ background: "var(--read)", borderColor: "var(--read)" }}></i>new, not in the circle yet</span>
+          <span><i className="sw" style={{ background: "var(--stale-bg)", borderColor: "var(--stale)", borderStyle: "dashed" }}></i>removed from the circle</span>
+          <span><i className="sw" style={{ background: "var(--top)", borderColor: "var(--strong)" }}></i>printed</span>
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function Traversal({ step }) {
+  const chain = chainOf(step);
+  const hasTemp = "temp" in step.vars;
+  const lastNext = chain.length ? step.nodes[chain[chain.length - 1]].next : null;
+  return (
+    <div className="panel travpanel">
+      <div className="sechead"><h2>Traversal</h2><small>where temp is, around the circle</small></div>
+      <div className="trows">
+        {chain.length === 0 && <div className="trow wait"><span className="tv">—</span><span className="ta"></span><span className="ts">empty list</span></div>}
+        {chain.map((id) => {
+          const here = hasTemp && step.vars.temp === id;
+          const done = step.printed.includes(id);
+          return (
+            <div key={id} className={"trow" + (here ? " here" : done ? " done" : " wait")}>
+              <span className="tv">{step.nodes[id].data}</span>
+              <span className="ta">{step.nodes[id].addr}</span>
+              <span className="ts">{here ? "◂ temp is here" : done ? "printed ✓" : "not visited yet"}</span>
+            </div>
+          );
+        })}
+        {chain.length > 0 && (
+          <div className="trow end">
+            <span className="tv">↩</span><span className="ta"></span>
+            <span className="ts">{lastNext === step.head ? `last node's next goes back to ${step.nodes[step.head].data}` : lastNext === null ? "last node's next is null, circle is open" : "circle passes through a removed node"}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+function refVal(step, id) {
+  if (id === undefined) return { v: "—" };
+  if (id === null) return { v: "NULL" };
+  const n = step.nodes[id];
+  return n ? { v: n.addr, s: `node ${n.data}` } : { v: "?" };
+}
+
+function VarsConsole({ step, prev }) {
+  const ref = useRef(null);
+  useEffect(() => { if (ref.current) ref.current.scrollTop = ref.current.scrollHeight; }, [step]);
+  const build = (s) => s ? {
+    head: refVal(s, s.head),
+    newNode: refVal(s, s.vars.newNode),
+    temp: "temp" in s.vars ? refVal(s, s.vars.temp) : { v: "—" },
+    value: { v: s.vars.value ?? "—" },
+  } : null;
+  const cur = build(step), pv = build(prev);
+  const po = prev ? prev.out : [];
+  const isNew = (i) => i >= po.length || po[i] !== step.out[i];
+  return (
+    <div className="panel varscol">
+      <div className="sechead"><h2>Variables</h2><small>inside {step.frame}</small></div>
+      <div className="vars v4">
+        {Object.entries(cur).map(([k, o]) => {
+          const changed = pv && String(pv[k].v) !== String(o.v) && o.v !== "—";
+          return (
+            <div key={k} className={"var" + (changed ? " changed" : "")}>
+              <div className="k">{k}</div>
+              <div className="val">{String(o.v)}{o.s && <small>{o.s}</small>}</div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="sechead consolehead"><h2>Console output</h2></div>
+      <div className="console" ref={ref} aria-live="polite">
+        {step.out.length === 0 ? <div className="none">Nothing printed yet</div> :
+          step.out.map((o, i) => <div key={i} className={isNew(i) ? "new" : "old"}>{o}{i === step.out.length - 1 && step.open ? "▌" : ""}</div>)}
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const dry = useMemo(buildMain, []);
+  const [mode, setMode] = useState("dry");
+  const [dIdx, setDIdx] = useState(0);
+  const [pSteps, setPSteps] = useState(initPlay);
+  const [pIdx, setPIdx] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(1200);
+  const [input, setInput] = useState("10");
+
+  const steps = mode === "dry" ? dry : pSteps;
+  const idx = Math.min(mode === "dry" ? dIdx : pIdx, steps.length - 1);
+  const setIdx = mode === "dry" ? setDIdx : setPIdx;
+  const step = steps[idx];
+  const prev = idx > 0 ? steps[idx - 1] : null;
+  const atEnd = idx >= steps.length - 1;
+  const lastSize = chainOf(pSteps[pSteps.length - 1]).length;
+
+  useEffect(() => {
+    if (!playing) return;
+    if (atEnd) { setPlaying(false); return; }
+    const id = setTimeout(() => setIdx(idx + 1), speed);
+    return () => clearTimeout(id);
+  }, [playing, idx, atEnd, speed, mode]);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+      if (e.key === "ArrowRight") { setPlaying(false); setIdx((i) => Math.min(i + 1, steps.length - 1)); }
+      else if (e.key === "ArrowLeft") { setPlaying(false); setIdx((i) => Math.max(i - 1, 0)); }
+      else if (e.key === " ") { e.preventDefault(); setPlaying((p) => !p); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [steps, setIdx]);
+
+  const switchMode = (m) => { setPlaying(false); setMode(m); };
+
+  const runOp = (type) => {
+    const base = pSteps;
+    const t = tracer(base[base.length - 1]);
+    if (type === "first" || type === "last") {
+      let v = parseInt(input, 10);
+      if (Number.isNaN(v)) v = Math.floor(Math.random() * 90) + 10;
+      type === "first" ? doAddFirst(t, v, null) : doAddLast(t, v, null);
+      setInput(String(v + 10));
+    } else if (type === "delFirst") doDeleteFirst(t, null);
+    else if (type === "delLast") doDeleteLast(t, null);
+    else doDisplay(t, null);
+    setPSteps([...base, ...t.steps]);
+    setPIdx(base.length);
+    setPlaying(true);
+  };
+
+  const resetPlay = () => { setPlaying(false); setPSteps(initPlay()); setPIdx(0); setInput("10"); };
+  const crumbs = step.frame === "main()" ? ["main()"] : ["main()", step.frame];
+
+  return (
+    <div className="app">
+      <header className="top">
+        <div>
+          <h1>Circular linked list, line by line</h1>
+          <p className="sub">There is no NULL at the end: the last node points back to head. Watch that link on every insert and delete.</p>
+        </div>
+        <div className="tabs" role="group" aria-label="Mode">
+          <button aria-pressed={mode === "dry"} onClick={() => switchMode("dry")}>Dry run main()</button>
+          <button aria-pressed={mode === "play"} onClick={() => switchMode("play")}>Try it yourself</button>
+        </div>
+      </header>
+
+      <div className="layout">
+        <CodePanel step={step} />
+
+        <div className="right">
+          <div className="panel controls">
+            <button className="btn" onClick={() => { setPlaying(false); setIdx(0); }}>Restart</button>
+            <button className="btn" disabled={idx === 0} onClick={() => { setPlaying(false); setIdx(idx - 1); }}>Prev</button>
+            <button className="btn primary" disabled={atEnd && !playing} onClick={() => setPlaying(!playing)}>{playing ? "Pause" : "Play"}</button>
+            <button className="btn" disabled={atEnd} onClick={() => { setPlaying(false); setIdx(idx + 1); }}>Next</button>
+            <div className="scrub">
+              <input type="range" min="0" max={steps.length - 1} value={idx} aria-label="Step"
+                onChange={(e) => { setPlaying(false); setIdx(+e.target.value); }} />
+              <span className="count">{idx + 1} / {steps.length}</span>
+            </div>
+            <select className="speed" value={speed} onChange={(e) => setSpeed(+e.target.value)} aria-label="Speed">
+              <option value={2000}>Slow</option>
+              <option value={1200}>Normal</option>
+              <option value={600}>Fast</option>
+            </select>
+            {mode === "play" && (
+              <div className="playrow">
+                <input type="number" value={input} onChange={(e) => setInput(e.target.value)} aria-label="Value for new node" />
+                <button className="btn push" disabled={lastSize >= LIMIT} onClick={() => runOp("first")}>addFirst({input || "?"})</button>
+                <button className="btn push" disabled={lastSize >= LIMIT} onClick={() => runOp("last")}>addLast({input || "?"})</button>
+                <button className="btn pop" onClick={() => runOp("delFirst")}>deleteFirst()</button>
+                <button className="btn pop" onClick={() => runOp("delLast")}>deleteLast()</button>
+                <button className="btn" onClick={() => runOp("display")}>display()</button>
+                <button className="btn" onClick={resetPlay}>Reset</button>
+                {lastSize >= LIMIT && <span className="limitnote">This demo stops at {LIMIT} nodes so the picture fits.</span>}
+              </div>
+            )}
+          </div>
+
+          <div className="panel explain" aria-live="polite">
+            <div className="crumbs">
+              {crumbs.map((c, i) => <span key={i} className={"crumb" + (i === crumbs.length - 1 ? " now" : "")}>{c}</span>)}
+              <span className="linetag">{step.line ? `line ${step.line}` : ""}</span>
+            </div>
+            <p className={"note" + (step.tone ? " " + step.tone : "")}>
+              {step.note}
+              {step.cond !== undefined && <span className={"pill " + (step.cond ? "t" : "f")}>{step.cond ? "TRUE" : "FALSE"}</span>}
+            </p>
+            {step.sub && <p className="subnote">{step.sub}</p>}
+          </div>
+
+          <HeapView step={step} />
+
+          <div className="bottom">
+            <Traversal step={step} />
+            <VarsConsole step={step} prev={prev} />
+          </div>
+        </div>
+      </div>
+      <footer className="sk-foot sk-ring"><span className="sk-loop" aria-hidden="true"></span><span className="sk-name">© 2026 Soumik Karmakar</span><span className="sk-arc" aria-hidden="true">↺</span></footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

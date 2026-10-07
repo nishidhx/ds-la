@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Stack using Linked List — Line-by-line Dry Run</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Schibsted+Grotesk:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef1f5; --panel:#ffffff; --ink:#0b1220; --muted:#3f4a5c; --line:#b9c2d0; --strong:#0b1220;
+  --code:#fbfcfe; --hl-line:#ffe066; --call-line:#cfdcf6;
+  --top:#f2b705; --top-ink:#0b1220;
+  --live:#0f5c55; --live-ink:#ffffff; --stale:#a3301a; --stale-bg:#ffe1d4; --read:#1a3fb0;
+  --kw:#7a1650; --num:#1a3fb0; --str:#0d6b52; --fn:#8a4b00;
+  --good:#0f5c55; --bad:#a3301a;
+  --mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --sans:"Schibsted Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45}
+#root{height:100%}
+button,input,select{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--top);outline-offset:2px}
+
+.app{display:flex;flex-direction:column;gap:10px;padding:10px 14px;max-width:1600px;margin:0 auto;min-height:100%}
+header.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+h1{font-size:21px;line-height:1.15;margin:0;font-weight:800;letter-spacing:-.015em}
+.sub{color:var(--muted);margin:2px 0 0;font-size:13px}
+.tabs{display:inline-flex;border:2px solid var(--strong);border-radius:999px;padding:2px;gap:2px;background:var(--panel)}
+.tabs button{border:0;background:none;padding:5px 14px;border-radius:999px;cursor:pointer;font-weight:700}
+.tabs button[aria-pressed="true"]{background:var(--strong);color:#fff}
+
+.layout{display:grid;gap:12px;grid-template-columns:1fr}
+.panel{background:var(--panel);border:1.5px solid var(--line);border-radius:12px}
+.codecol{display:flex;flex-direction:column;border-color:var(--strong)}
+.codehead{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;background:var(--strong);color:#fff;border-radius:10px 10px 0 0;font-family:var(--mono);font-size:13px}
+.codehead span{opacity:.85}
+.codebox{position:relative;overflow:auto;background:var(--code);border-radius:0 0 10px 10px;font-family:var(--mono);padding:6px 0;max-height:70vh}
+.ln{display:flex;align-items:center;white-space:pre;padding-right:12px;min-width:max-content;border-left:4px solid transparent;height:var(--lh,20px);font-size:var(--fs,13px);color:var(--ink)}
+.ln.blank{height:calc(var(--lh,20px) * .25)}
+.ln .no{width:38px;flex:none;text-align:right;padding-right:10px;color:#7a8597;user-select:none}
+.ln.call{background:var(--call-line);border-left-color:var(--read)}
+.ln.active{background:var(--hl-line);border-left-color:var(--strong);font-weight:600}
+.ln.active .no{color:var(--ink);font-weight:700}
+.kw{color:var(--kw);font-weight:600}.num{color:var(--num);font-weight:600}.str{color:var(--str)}.fn{color:var(--fn)}
+
+.right{display:flex;flex-direction:column;gap:10px;min-width:0}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:8px 10px}
+.btn{border:2px solid var(--strong);background:var(--panel);border-radius:9px;padding:4px 12px;cursor:pointer;font-weight:700;color:var(--ink)}
+.btn:hover{background:#e3e8f0}
+.btn.primary{background:var(--strong);color:#fff;min-width:74px}
+.btn.primary:hover{background:#26324a}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.scrub{flex:1 1 150px;display:flex;align-items:center;gap:8px;min-width:130px}
+.scrub input{flex:1;accent-color:var(--strong)}
+.count{font-family:var(--mono);font-size:13px;font-weight:600;white-space:nowrap}
+.speed{border:2px solid var(--strong);border-radius:9px;padding:3px 6px;background:var(--panel);font-weight:600}
+.playrow{display:flex;flex-wrap:wrap;align-items:center;gap:7px;flex-basis:100%;padding-top:7px;border-top:1.5px solid var(--line)}
+.playrow input{width:72px;border:2px solid var(--strong);border-radius:9px;padding:3px 8px;background:var(--panel);font-family:var(--mono);font-weight:600}
+.btn.push{background:var(--live);border-color:var(--live);color:#fff}
+.btn.pop{background:var(--stale);border-color:var(--stale);color:#fff}
+
+.explain{padding:10px 14px;min-height:96px;border-left:6px solid var(--strong)}
+.crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:5px;font-family:var(--mono);font-size:12px;margin-bottom:5px}
+.crumb{padding:1px 8px;border-radius:6px;border:1.5px solid var(--strong);font-weight:600}
+.crumb.now{background:var(--strong);color:#fff}
+.linetag{margin-left:auto;font-weight:700}
+.note{font-size:16px;font-weight:600;margin:0;white-space:pre-line;color:var(--ink)}
+.note.good{color:var(--good)}.note.bad{color:var(--bad)}
+.subnote{color:var(--muted);margin:3px 0 0;font-size:13.5px}
+.pill{display:inline-block;font-family:var(--mono);font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:6px;margin-left:8px;vertical-align:2px;color:#fff}
+.pill.t{background:var(--stale)}.pill.f{background:var(--live)}
+
+.sechead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:6px}
+.sechead h2{font-size:14px;margin:0;font-weight:800}
+.sechead small{color:var(--muted);font-family:var(--mono);font-size:12px;font-weight:600}
+.arrpanel{padding:10px 14px}
+.arr-scroll{overflow-x:auto}
+.arr{display:grid;grid-template-columns:46px repeat(5,minmax(54px,1fr));gap:6px;min-width:340px}
+.idx{text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink)}
+.cell{height:48px;border-radius:9px;border:2.5px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--mono);font-size:18px;font-weight:700;line-height:1.1;transition:background .3s,border-color .3s,color .3s}
+.cell small{font-size:10px;font-weight:600}
+.cell.empty{color:#6b7686;border-style:dashed;border-color:#9aa5b5}
+.cell.live{background:var(--live);border-color:var(--live);color:var(--live-ink)}
+.cell.live.istop{background:var(--strong);border-color:var(--strong)}
+.cell.stale{background:var(--stale-bg);border-color:var(--stale);border-style:dashed;color:var(--stale)}
+.cell.stale .v{text-decoration:line-through;text-decoration-thickness:2px}
+.cell.phantom{border:2px dashed #9aa5b5;background:transparent;color:#6b7686;font-size:13px}
+.cell.h-write{animation:pop .55s ease}
+.cell.h-read{box-shadow:0 0 0 3px #fff,0 0 0 6px var(--read)}
+.cell.h-target{box-shadow:0 0 0 3px #fff,0 0 0 6px var(--top)}
+.cell.h-ghost{animation:fade .7s ease}
+@keyframes pop{0%{transform:scale(.7);opacity:.2}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+@keyframes fade{0%{background:var(--live);border-color:var(--live);color:#fff}100%{}}
+.ptr{height:30px;display:flex;flex-direction:column;align-items:center}
+.ptr .arrow{width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:10px solid var(--strong)}
+.ptr .lbl{background:var(--top);color:var(--top-ink);border:1.5px solid var(--strong);font-family:var(--mono);font-weight:700;font-size:11.5px;padding:0 7px;border-radius:5px;margin-top:1px;white-space:nowrap}
+.memline{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 16px;font-family:var(--mono);font-size:12.5px;margin-top:6px;color:var(--ink)}
+.memline b{font-weight:700}.memline .l{color:var(--live)}.memline .s{color:var(--stale);text-decoration:line-through}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-family:var(--sans);font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.sw{width:12px;height:12px;border-radius:3px;border:2px solid;display:inline-block}
+
+.bottom{display:grid;gap:10px;grid-template-columns:1fr}
+@media (min-width:600px){.bottom{grid-template-columns:240px minmax(0,1fr)}}
+.towerpanel{padding:10px 14px;display:flex;flex-direction:column}
+.towerwrap{position:relative;flex:1;display:flex;justify-content:center;padding-top:26px;min-height:200px}
+.tower{align-self:flex-end;height:100%;max-height:232px;width:120px;margin-right:56px;border:3px solid var(--strong);border-top:0;border-radius:0 0 12px 12px;padding:5px;display:flex;flex-direction:column;gap:4px}
+.slot{position:relative;flex:1 1 0;min-height:24px;max-height:40px;border-radius:7px;display:flex;align-items:center;justify-content:space-between;padding:0 9px;font-family:var(--mono);font-weight:700;font-size:16px}
+.slot.full{background:var(--live);color:#fff}
+.slot.full.istop{background:var(--strong)}
+.slot.free{border:1.5px dashed #9aa5b5;color:#6b7686;font-size:11px;font-weight:500;justify-content:center}
+.slot .i{font-size:11px;opacity:.85;font-weight:500}
+.slot .toptag{position:absolute;left:calc(100% + 11px);background:var(--top);color:var(--top-ink);border:1.5px solid var(--strong);padding:0 6px;border-radius:5px;font-size:11.5px;white-space:nowrap}
+.slot.drop{animation:drop .5s cubic-bezier(.3,1.4,.5,1)}
+@keyframes drop{0%{transform:translateY(-60px);opacity:0}100%{transform:none;opacity:1}}
+.chip{position:absolute;top:0;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:12.5px;font-weight:700;padding:2px 10px;border-radius:999px;white-space:nowrap;color:#fff}
+.chip.out{background:var(--stale);animation:rise .9s ease}
+.chip.in{background:var(--live);animation:dropin .6s ease}
+@keyframes rise{0%{transform:translate(-50%,30px);opacity:0}100%{transform:translate(-50%,0);opacity:1}}
+@keyframes dropin{0%{transform:translate(-50%,-12px);opacity:0}100%{transform:translate(-50%,0);opacity:1}}
+.towernote{text-align:center;font-size:12px;color:var(--muted);margin-top:6px;font-weight:500}
+
+.varscol{padding:10px 14px;display:flex;flex-direction:column;min-width:0}
+.vars{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.var{border:2px solid var(--line);border-radius:9px;padding:4px 8px;font-family:var(--mono)}
+.var .k{font-size:11.5px;color:var(--muted);font-weight:600}
+.var .val{font-size:18px;font-weight:700}
+.var.changed{border-color:var(--strong);background:var(--hl-line)}
+.consolehead{margin-top:10px}
+.console{flex:1;background:#0b1220;color:#e8edf5;border-radius:9px;font-family:var(--mono);font-size:13px;min-height:90px;overflow:auto;padding:8px 12px}
+.console div{white-space:pre}
+.console .new{color:#ffe066;font-weight:700}
+.console .new::after{content:"   ◂ new";color:#9fb0c8;font-weight:500}
+.console .old{color:#c9d3e2}
+.console .none{color:#8a97ab;font-style:italic}
+.kbd{color:var(--muted);font-size:12px;margin-left:auto;white-space:nowrap}
+
+@media (min-width:980px){
+  .app{height:100%;min-height:0}
+  .layout{flex:1;min-height:0;grid-template-columns:minmax(420px,.85fr) minmax(0,1.4fr)}
+  .codecol{min-height:0}
+  .codebox{flex:1;min-height:0;max-height:none}
+  .right{min-height:0;overflow:auto}
+  .bottom{flex:1;min-height:0}
+  .towerwrap{min-height:0}
+}
+@media (min-width:980px) and (max-height:800px){
+  .app{gap:6px;padding:6px 12px}
+  .sub{display:none}
+  h1{font-size:18px}
+  .tabs button{padding:3px 12px}
+  .right,.bottom{gap:6px}
+  .layout{gap:10px}
+  .controls{padding:5px 8px}
+  .explain{min-height:78px;padding:7px 12px}
+  .note{font-size:15px}
+  .arrpanel,.towerpanel,.varscol{padding:7px 12px}
+  .cell{height:40px;font-size:16px}
+  .ptr{height:26px}
+  .towerwrap{padding-top:22px}
+  .slot{min-height:20px}
+  .var .val{font-size:16px}
+  .consolehead{margin-top:6px}
+  .console{min-height:60px}
+  .codehead{padding:4px 12px}
+}
+@media (max-width:600px){.vars{grid-template-columns:repeat(3,minmax(0,1fr))}.kbd{display:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.ty{color:#0d5a8a;font-weight:600}
+.heappanel{padding:10px 14px}
+.heap-scroll{overflow-x:auto;padding-bottom:2px}
+.chain{display:flex;align-items:flex-end;min-width:max-content;padding:0 8px 8px}
+.nodew{display:flex;flex-direction:column;align-items:center}
+.tags{display:flex;gap:4px;height:24px;align-items:flex-end;padding-bottom:3px}
+.tag{font-family:var(--mono);font-size:11.5px;font-weight:700;padding:0 7px;border-radius:5px;border:1.5px solid var(--strong);white-space:nowrap;line-height:17px}
+.tag.top{background:var(--top)}
+.tag.newNode{background:#bcd4ff}
+.tag.temp{background:#ffcfe1}
+.addr{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--muted);height:16px}
+.box{display:flex;border:2.5px solid var(--live);border-radius:9px;overflow:hidden;height:52px;background:#fff;transition:border-color .3s}
+.box .data,.box .nxt{display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--mono);line-height:1.1}
+.box small{font-size:9.5px;font-weight:600;opacity:.85}
+.box .data{background:var(--live);color:#fff;min-width:54px;font-size:19px;font-weight:700;padding:0 6px}
+.box .nxt{min-width:66px;font-size:12.5px;font-weight:700;color:var(--ink);border-left:2.5px solid var(--live);padding:0 6px}
+.nodew.istop .box{border-color:var(--strong)}
+.nodew.istop .data{background:var(--strong)}
+.nodew.istop .nxt{border-left-color:var(--strong)}
+.nodew.fresh .box{border-style:dashed;border-color:var(--read)}
+.nodew.fresh .data{background:var(--read)}
+.nodew.fresh .nxt{border-left-color:var(--read)}
+.nodew.detached .box{border-style:dashed;border-color:var(--stale);background:var(--stale-bg)}
+.nodew.detached .data{background:var(--stale-bg);color:var(--stale)}
+.nodew.detached .nxt{border-left-color:var(--stale);color:var(--stale)}
+.nodew.garbage{opacity:.45}
+.nodew.garbage .addr::after{content:" freed"}
+.nodew.hl-new .box{animation:pop .55s ease}
+.nodew.hl-node .box{box-shadow:0 0 0 3px #fff,0 0 0 6px var(--read)}
+.nodew.hl-data .data{box-shadow:inset 0 0 0 3px var(--top)}
+.nodew.hl-next .nxt{background:var(--hl-line)}
+.nodew.hl-detach .box{animation:shake .5s ease}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateY(-6px)}75%{transform:translateY(3px)}}
+.link{position:relative;width:40px;height:52px;flex:none}
+.link::before{content:"";position:absolute;left:3px;right:9px;top:50%;height:3px;background:var(--strong);transform:translateY(-50%)}
+.link::after{content:"";position:absolute;right:1px;top:50%;transform:translateY(-50%);border-left:10px solid var(--strong);border-top:7px solid transparent;border-bottom:7px solid transparent}
+.link.stale::before{background:var(--stale)}.link.stale::after{border-left-color:var(--stale)}
+.link.none{width:30px}.link.none::before,.link.none::after{display:none}
+.nullbox{height:52px;padding:0 12px;border:2.5px dashed #9aa5b5;border-radius:9px;display:flex;align-items:center;font-family:var(--mono);font-weight:700;color:#5b6678}
+.ltower{align-self:flex-end;width:132px;margin-right:56px;height:100%;max-height:300px;border:3px solid var(--strong);border-top:0;border-radius:0 0 12px 12px;padding:5px;display:flex;flex-direction:column;justify-content:flex-end;gap:4px}
+.ltower .slot{flex:0 1 36px;max-height:36px}
+.ltower .slot .i{font-size:10px}
+.ltower .emptymsg{text-align:center;font-family:var(--mono);font-size:11px;color:#6b7686;padding:8px 0}
+.vars .val{font-size:15px}
+.vars .val small{display:block;font-size:10.5px;font-weight:600;color:var(--muted)}
+.limitnote{font-size:12px;color:var(--muted)}
+.sk-foot{flex:none;display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;line-height:1;white-space:nowrap;padding:2px 0 4px;color:var(--muted)}
+.sk-nodes{gap:5px;font-family:var(--mono);font-weight:700;font-size:11.5px;color:var(--ink)}
+.sk-nodes .sk-b{display:inline-flex;border:2px solid var(--live);border-radius:7px;overflow:hidden;background:#fff}
+.sk-nodes .sk-b span{padding:4px 9px}
+.sk-nodes .sk-b .sk-x{border-left:2px solid var(--live);background:var(--hl-line);padding:4px 6px}
+.sk-nodes .sk-null{border:2px dashed #9aa5b5;border-radius:7px;padding:3px 7px;color:#5b6678;font-size:10.5px}
+.sk-nodes .sk-a{color:var(--live)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.7/babel.min.js"></script>
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useMemo } = React;
+const LIMIT = 8;
+const CODE = `#include <stdio.h>
+#include <stdlib.h>
+
+struct Node {
+    int data;
+    struct Node* next;
+};
+
+struct Node* top = NULL;
+
+void push(int value) {
+    struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
+
+    newNode->data = value;
+    newNode->next = top;
+    top = newNode;
+}
+
+int pop() {
+    if (top == NULL) {
+        printf("Stack Underflow\\n");
+        return -1;
+    }
+
+    struct Node* temp = top;
+
+    int value = temp->data;
+
+    top = top->next;
+
+    free(temp);
+
+    return value;
+}
+
+int peek() {
+    if (top == NULL) {
+        printf("Stack is empty\\n");
+        return -1;
+    }
+
+    return top->data;
+}
+
+void display() {
+    if (top == NULL) {
+        printf("Stack is empty\\n");
+        return;
+    }
+
+    struct Node* temp = top;
+
+    while (temp != NULL) {
+        printf("%d\\n", temp->data);
+        temp = temp->next;
+    }
+}
+
+int main() {
+
+    push(10);
+    push(20);
+    push(30);
+
+    display();
+
+    printf("Popped: %d\\n", pop());
+
+    printf("Top: %d\\n", peek());
+
+    display();
+
+    return 0;
+}`;
+const LINES = CODE.split("\n");
+
+function tokenize(line) {
+  const re = /("(?:[^"\\]|\\.)*")|(#include|#define|\b(?:struct|int|void|if|else|return|for|while|do)\b)|\b(\d+)\b|\b(printf|malloc|free|sizeof|NULL|Node)\b|([A-Za-z_]\w*)(?=\s*\()/g;
+  const out = [];
+  let last = 0, m, k = 0;
+  while ((m = re.exec(line))) {
+    if (m.index > last) out.push(line.slice(last, m.index));
+    const cls = m[1] ? "str" : m[2] ? "kw" : m[3] ? "num" : m[4] ? (/^[a-z]/.test(m[4]) ? "fn" : "ty") : "fn";
+    out.push(<span key={k++} className={cls}>{m[0]}</span>);
+    last = re.lastIndex;
+  }
+  if (last < line.length) out.push(line.slice(last));
+  return out;
+}
+
+const ADDR = (i) => "0x" + (0x7a10 + i * 0x18).toString(16);
+
+function copyNodes(nodes) {
+  const o = {};
+  for (const k in nodes) o[k] = { ...nodes[k] };
+  return o;
+}
+
+function tracer(init) {
+  const st = init
+    ? { nodes: copyNodes(init.nodes), top: init.top, out: [...init.out], nextId: init.nextId }
+    : { nodes: {}, top: undefined, out: [], nextId: 0 };
+  st.frame = "main()"; st.vars = {}; st.callLine = null;
+  const steps = [];
+  const emit = (o) => steps.push({
+    nodes: copyNodes(st.nodes), top: st.top, out: [...st.out], nextId: st.nextId,
+    frame: st.frame, vars: { ...st.vars }, callLine: st.callLine,
+    hl: null, line: null, tone: null, ...o
+  });
+  return { st, steps, emit };
+}
+
+const desc = (st, id) => id === null || id === undefined ? "NULL" : `${st.nodes[id].data} (${st.nodes[id].addr})`;
+function sizeOf(st) { let n = 0, c = st.top; while (c !== null && c !== undefined) { n++; c = st.nodes[c].next; } return n; }
+
+function enterMain(t, line, text) {
+  const { st, emit } = t;
+  st.frame = "main()"; st.vars = {}; st.callLine = null;
+  if (line) emit({ line, note: text });
+}
+
+function doPush(t, v, line) {
+  const { st, emit } = t;
+  enterMain(t, line, `main() calls push(${v}).`);
+  st.callLine = line || null; st.frame = `push(${v})`; st.vars = { value: v };
+  emit({ line: 11, note: `Enter push(). The parameter value = ${v}.`, sub: "A linked-list stack has no fixed size, so there is no overflow check here." });
+  const id = st.nextId++;
+  const addr = ADDR(id);
+  st.nodes[id] = { id, addr, data: "?", next: null, uninit: true };
+  st.vars.newNode = id;
+  emit({ line: 12, note: `malloc(sizeof(struct Node)) → a fresh node is allocated on the heap at ${addr}.`, sub: "malloc does not clear the memory, so data and next hold leftover junk values (shown as ?) until the next lines set them.", hl: { id, kind: "new" } });
+  emit({ line: 12, note: `newNode = ${addr} → the local pointer newNode stores the address of the new node.`, hl: { id, kind: "node" } });
+  st.nodes[id].data = v;
+  emit({ line: 14, note: `newNode->data = ${v} → the node now stores ${v}.`, hl: { id, kind: "data" } });
+  st.nodes[id].next = st.top === undefined ? null : st.top; st.nodes[id].uninit = false;
+  emit({
+    line: 15,
+    note: st.top === null ? "newNode->next = top → top is NULL, so next becomes NULL." : `newNode->next = top → the new node now points to ${desc(st, st.top)}.`,
+    sub: st.top === null ? `${v} will be the only node, and the bottom of the stack.` : `The old top will sit just below ${v}. top itself has not moved yet.`,
+    hl: { id, kind: "next" }
+  });
+  st.top = id;
+  emit({ line: 16, note: `top = newNode → top now points to ${v} (${addr}).`, sub: `${v} is the new top of the stack (last in).`, hl: { id, kind: "node" }, tone: "good", pushed: v });
+  emit({ line: 17, note: `push(${v}) is done. Stack size is now ${sizeOf(st)}.`, sub: "newNode was a local variable, so it disappears now. top still holds the address of the node." });
+  st.frame = "main()"; st.vars = {}; st.callLine = null;
+}
+
+function doPop(t, line) {
+  const { st, emit } = t;
+  enterMain(t, line, "main() calls pop() inside printf(). pop() runs first, then its result is printed.");
+  st.callLine = line || null; st.frame = "pop()"; st.vars = {};
+  emit({ line: 19, note: "Enter pop()." });
+  const empty = st.top === null;
+  emit({ line: 20, note: `Underflow check: top == NULL\n${empty ? "NULL" : st.nodes[st.top].addr} == NULL → ${empty}`, cond: empty,
+    sub: empty ? "There is no node to remove." : "top points to a node, so the if-block is skipped." });
+  let ret, old = null;
+  if (empty) {
+    st.out.push("Stack Underflow");
+    emit({ line: 21, note: `The stack is empty, so "Stack Underflow" is printed.`, tone: "bad" });
+    ret = -1; st.vars = { ret };
+    emit({ line: 22, note: "return -1; — -1 signals that there was nothing to pop.", tone: "bad" });
+  } else {
+    old = st.top;
+    st.vars = { temp: old };
+    emit({ line: 25, note: `struct Node* temp = top → temp and top both point to ${desc(st, old)}.`, sub: "temp keeps hold of the node so we can still read it after top moves.", hl: { id: old, kind: "node" } });
+    const v = st.nodes[old].data;
+    st.vars.value = v;
+    emit({ line: 27, note: `value = temp->data → value = ${v}.`, sub: "Read the data of the top node (last in = first out).", hl: { id: old, kind: "data" } });
+    st.top = st.nodes[old].next;
+    emit({ line: 29, note: `top = top->next → top moves down to ${desc(st, st.top)}.`,
+      sub: `The ${v} node is no longer reachable from top, so it is out of the stack. Only temp still holds its address.`,
+      hl: { id: old, kind: "detach" }, popped: v, tone: "bad" });
+    st.nodes[old].garbage = true;
+    emit({ line: 31, note: `free(temp) → the memory of the ${v} node at ${st.nodes[old].addr} is given back to the system.`, sub: "C has no automatic cleanup, so we must free the node ourselves. This is why temp saved its address before top moved.", hl: { id: old, kind: "detach" }, tone: "bad" });
+    delete st.nodes[old];
+    ret = v; st.vars.ret = v;
+    emit({ line: 33, note: `return ${v}; — ${v} goes back to the caller.` });
+  }
+  st.frame = "main()"; st.vars = {};
+  st.out.push(`Popped: ${ret}`);
+  emit({ line: line || null, note: `Back in main(): printf prints "Popped: ${ret}".`, sub: old !== null ? `pop() has returned, so temp is gone. The ${ret} node was already freed inside pop().` : null });
+  st.callLine = null;
+}
+
+function doPeek(t, line) {
+  const { st, emit } = t;
+  enterMain(t, line, "main() calls peek() inside printf(). peek() runs first.");
+  st.callLine = line || null; st.frame = "peek()"; st.vars = {};
+  emit({ line: 36, note: "Enter peek(). It only reads the top node, it never moves top." });
+  const empty = st.top === null;
+  emit({ line: 37, note: `Empty check: top == NULL\n${empty ? "NULL" : st.nodes[st.top].addr} == NULL → ${empty}`, cond: empty,
+    sub: empty ? "No node to look at." : "top points to a node, so the if-block is skipped." });
+  let ret;
+  if (empty) {
+    st.out.push("Stack is empty");
+    emit({ line: 38, note: `"Stack is empty" is printed.`, tone: "bad" });
+    ret = -1; st.vars = { ret };
+    emit({ line: 39, note: "return -1;", tone: "bad" });
+  } else {
+    ret = st.nodes[st.top].data; st.vars = { ret };
+    emit({ line: 42, note: `return top->data → ${ret}.`, sub: `top still points to ${desc(st, st.top)}. Nothing is removed.`, hl: { id: st.top, kind: "data" } });
+  }
+  st.frame = "main()"; st.vars = {};
+  st.out.push(`Top: ${ret}`);
+  emit({ line: line || null, note: `Back in main(): printf prints "Top: ${ret}".` });
+  st.callLine = null;
+}
+
+function doDisplay(t, line) {
+  const { st, emit } = t;
+  enterMain(t, line, "main() calls display().");
+  st.callLine = line || null; st.frame = "display()"; st.vars = {};
+  emit({ line: 45, note: "Enter display(). It walks the list from top to the end." });
+  const empty = st.top === null;
+  emit({ line: 46, note: `Empty check: top == NULL\n${empty ? "NULL" : st.nodes[st.top].addr} == NULL → ${empty}`, cond: empty });
+  if (empty) {
+    st.out.push("Stack is empty");
+    emit({ line: 47, note: `"Stack is empty" is printed.`, tone: "bad" });
+    emit({ line: 48, note: "return;" });
+  } else {
+    st.vars = { temp: st.top };
+    emit({ line: 51, note: `struct Node* temp = top → temp starts at ${desc(st, st.top)}.`, sub: "temp is a separate pointer, so moving it never changes top.", hl: { id: st.top, kind: "node" } });
+    const order = [];
+    let c = st.top;
+    while (c !== null) {
+      emit({ line: 53, note: `temp != NULL → ${st.nodes[c].addr} != NULL → true.`, cond: true, hl: { id: c, kind: "node" } });
+      st.out.push(String(st.nodes[c].data));
+      order.push(st.nodes[c].data);
+      emit({ line: 54, note: `printf temp->data → ${st.nodes[c].data}`, hl: { id: c, kind: "data" } });
+      const n = st.nodes[c].next;
+      st.vars = { temp: n };
+      emit({ line: 55, note: `temp = temp->next → temp moves to ${desc(st, n)}.`, hl: c !== null ? { id: c, kind: "next" } : null });
+      c = n;
+    }
+    emit({ line: 53, note: "temp != NULL → NULL != NULL → false. The loop ends.", cond: false });
+    emit({ line: 57, note: `display() is done. Printed ${order.join(", ")}.`, sub: "The last value pushed was printed first. That is LIFO." });
+  }
+  st.frame = "main()"; st.vars = {}; st.callLine = null;
+}
+
+function buildMain() {
+  const t = tracer(null);
+  const { st, emit } = t;
+  st.frame = "before main()";
+  st.top = null;
+  emit({ line: 9, note: "struct Node* top = NULL → the stack starts empty.", sub: "top is a global pointer. No array and no fixed size. Nodes will be created one at a time on the heap with malloc()." });
+  st.frame = "main()";
+  emit({ line: 59, note: "Execution starts in main(). top is NULL, so the stack is empty." });
+  doPush(t, 10, 61);
+  doPush(t, 20, 62);
+  doPush(t, 30, 63);
+  doDisplay(t, 65);
+  doPop(t, 67);
+  doPeek(t, 69);
+  doDisplay(t, 71);
+  const vals = []; let c = st.top;
+  while (c !== null) { vals.push(st.nodes[c].data); c = st.nodes[c].next; }
+  emit({ line: 73, note: `return 0; → main() ends. Final stack (top → bottom): ${vals.join(", ")}.`, sub: "The popped 30 node was freed, so it is gone from memory entirely, unlike the array version where the value stays in its slot." });
+  return t.steps;
+}
+
+function initPlay() {
+  const t = tracer({ nodes: {}, top: null, out: [], nextId: 0 });
+  t.emit({ note: "A fresh, empty stack (top = NULL).", sub: "Push, pop, peek or display. Pop an empty stack to see an underflow." });
+  return t.steps;
+}
+const UNITS = LINES.reduce((a, l) => a + (l.trim() === "" ? 0.25 : 1), 0);
+
+function CodePanel({ step }) {
+  const ref = useRef(null);
+  const [lh, setLh] = useState(20);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const fit = () => {
+      if (window.innerWidth < 980) { setLh(20); return; }
+      const h = el.clientHeight - 14;
+      setLh(Math.max(10.2, Math.min(24, h / UNITS)));
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    window.addEventListener("resize", fit);
+    return () => { ro.disconnect(); window.removeEventListener("resize", fit); };
+  }, []);
+  useEffect(() => {
+    const c = ref.current;
+    const target = step.line || step.callLine;
+    if (!c || !target || c.scrollHeight <= c.clientHeight + 2) return;
+    const el = c.querySelector(`[data-ln="${target}"]`);
+    if (!el) return;
+    const y = el.offsetTop - c.clientHeight / 2 + el.clientHeight / 2;
+    c.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+  }, [step]);
+  const fs = Math.max(10, Math.min(15, lh * 0.8));
+  return (
+    <div className="panel codecol">
+      <div className="codehead"><b>stack.c</b><span>{step.line ? `executing line ${step.line}` : "waiting"}</span></div>
+      <div className="codebox" ref={ref} style={{ "--lh": lh + "px", "--fs": fs + "px" }}>
+        {LINES.map((l, i) => {
+          const n = i + 1;
+          const cls = "ln" + (l.trim() === "" ? " blank" : "") + (step.line === n ? " active" : step.callLine === n ? " call" : "");
+          return (
+            <div key={n} data-ln={n} className={cls}>
+              <span className="no">{l.trim() === "" ? "" : n}</span><span>{tokenize(l)}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function chainOf(step) {
+  const ids = [];
+  let c = step.top;
+  while (c !== null && c !== undefined && step.nodes[c]) { ids.push(c); c = step.nodes[c].next; }
+  return ids;
+}
+
+function HeapView({ step }) {
+  if (step.top === undefined) {
+    return (
+      <div className="panel heappanel">
+        <div className="sechead"><h2>Heap memory</h2><small>struct Node blocks</small></div>
+        <p className="subnote" style={{ margin: "14px 0 18px" }}>top has not been created yet.</p>
+      </div>
+    );
+  }
+  const chain = chainOf(step);
+  const extras = Object.keys(step.nodes).map(Number).filter((id) => !chain.includes(id));
+  const items = [...extras, ...chain];
+  const tagsFor = (id) => {
+    const t = [];
+    if (step.top === id) t.push("top");
+    if (step.vars.newNode === id) t.push("newNode");
+    if ("temp" in step.vars && step.vars.temp === id) t.push("temp");
+    return t;
+  };
+  const hl = step.hl;
+  const vals = chain.map((id) => step.nodes[id].data);
+  return (
+    <div className="panel heappanel">
+      <div className="sechead"><h2>Heap memory</h2><small>each box is a struct Node: data | next</small></div>
+      <div className="heap-scroll">
+        <div className="chain">
+          {items.map((id, k) => {
+            const n = step.nodes[id];
+            const inChain = chain.includes(id);
+            let cls = "nodew";
+            if (!inChain) cls += n.garbage ? " detached garbage" : step.vars.newNode === id ? " fresh" : " detached";
+            else if (step.top === id) cls += " istop";
+            if (hl && hl.id === id) cls += " hl-" + hl.kind;
+            const nextItem = items[k + 1];
+            let link;
+            if (n.next !== null) link = <div className={"link" + (!inChain ? " stale" : "")}></div>;
+            else if (k === items.length - 1) link = <div className="link"></div>;
+            else link = <div className="link none"></div>;
+            return (
+              <React.Fragment key={id}>
+                <div className={cls}>
+                  <div className="tags">{tagsFor(id).map((t) => <span key={t} className={"tag " + t}>{t} ▾</span>)}</div>
+                  <div className="addr">{n.addr}</div>
+                  <div className="box">
+                    <div className="data"><small>data</small>{n.data}</div>
+                    <div className="nxt"><small>next</small>{n.uninit ? "?" : n.next === null ? "NULL" : step.nodes[n.next] ? step.nodes[n.next].addr : "?"}</div>
+                  </div>
+                </div>
+                {link}
+              </React.Fragment>
+            );
+          })}
+          <div className="nodew">
+            <div className="tags">
+              {step.top === null && <span className="tag top">top ▾</span>}
+              {"temp" in step.vars && step.vars.temp === null && <span className="tag temp">temp ▾</span>}
+            </div>
+            <div className="addr"></div>
+            <div className="nullbox">NULL</div>
+          </div>
+        </div>
+      </div>
+      <div className="memline">
+        <span>top → {vals.map((v, i) => <span key={i}><b className="l">{v}</b> → </span>)}NULL&nbsp;&nbsp; size = <b>{chain.length}</b></span>
+        <span className="legend">
+          <span><i className="sw" style={{ background: "var(--live)", borderColor: "var(--live)" }}></i>in stack</span>
+          <span><i className="sw" style={{ background: "var(--read)", borderColor: "var(--read)" }}></i>new, not linked yet</span>
+          <span><i className="sw" style={{ background: "var(--stale-bg)", borderColor: "var(--stale)", borderStyle: "dashed" }}></i>popped, unreachable from top</span>
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function Tower({ step, idx }) {
+  const chain = step.top === undefined ? [] : chainOf(step);
+  const drop = step.hl && step.hl.kind === "node" && step.line === 19;
+  return (
+    <div className="panel towerpanel">
+      <div className="sechead"><h2>Logical stack</h2><small>LIFO</small></div>
+      <div className="towerwrap">
+        {step.popped != null && <div key={"o" + idx} className="chip out">↑ {step.popped} popped</div>}
+        {step.pushed != null && <div key={"i" + idx} className="chip in">↓ {step.pushed} pushed</div>}
+        <div className="ltower">
+          {chain.length === 0 && <div className="emptymsg">empty</div>}
+          {chain.map((id, k) => (
+            <div key={id} className={`slot full${k === 0 ? " istop" : ""}${k === 0 && drop ? " drop" : ""}`}>
+              <span>{step.nodes[id].data}</span><span className="i">{step.nodes[id].addr}</span>
+              {k === 0 && <span className="toptag">◂ top</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="towernote">{step.top === null ? "top = NULL, the stack is empty" : "Nodes are added and removed only at the top"}</div>
+    </div>
+  );
+}
+
+function refVal(step, id) {
+  if (id === undefined) return { v: "—" };
+  if (id === null) return { v: "NULL" };
+  const n = step.nodes[id];
+  return n ? { v: n.addr, s: `node ${n.data}` } : { v: "?" };
+}
+
+function VarsConsole({ step, prev }) {
+  const ref = useRef(null);
+  useEffect(() => { if (ref.current) ref.current.scrollTop = ref.current.scrollHeight; }, [step]);
+  const build = (s) => s ? {
+    top: refVal(s, s.top),
+    newNode: refVal(s, s.vars.newNode),
+    temp: "temp" in s.vars ? refVal(s, s.vars.temp) : { v: "—" },
+    value: { v: s.vars.value ?? "—" },
+    returns: { v: s.vars.ret ?? "—" },
+  } : null;
+  const cur = build(step), pv = build(prev);
+  const prevLen = prev ? prev.out.length : 0;
+  return (
+    <div className="panel varscol">
+      <div className="sechead"><h2>Variables</h2><small>inside {step.frame}</small></div>
+      <div className="vars">
+        {Object.entries(cur).map(([k, o]) => {
+          const changed = pv && String(pv[k].v) !== String(o.v) && o.v !== "—";
+          return (
+            <div key={k} className={"var" + (changed ? " changed" : "")}>
+              <div className="k">{k}</div>
+              <div className="val">{String(o.v)}{o.s && <small>{o.s}</small>}</div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="sechead consolehead"><h2>Console output</h2></div>
+      <div className="console" ref={ref} aria-live="polite">
+        {step.out.length === 0 ? <div className="none">Nothing printed yet</div> :
+          step.out.map((o, i) => <div key={i} className={i >= prevLen ? "new" : "old"}>{o}</div>)}
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const dry = useMemo(buildMain, []);
+  const [mode, setMode] = useState("dry");
+  const [dIdx, setDIdx] = useState(0);
+  const [pSteps, setPSteps] = useState(initPlay);
+  const [pIdx, setPIdx] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(1200);
+  const [input, setInput] = useState("40");
+
+  const steps = mode === "dry" ? dry : pSteps;
+  const idx = Math.min(mode === "dry" ? dIdx : pIdx, steps.length - 1);
+  const setIdx = mode === "dry" ? setDIdx : setPIdx;
+  const step = steps[idx];
+  const prev = idx > 0 ? steps[idx - 1] : null;
+  const atEnd = idx >= steps.length - 1;
+  const lastSize = chainOf(pSteps[pSteps.length - 1]).length;
+
+  useEffect(() => {
+    if (!playing) return;
+    if (atEnd) { setPlaying(false); return; }
+    const id = setTimeout(() => setIdx(idx + 1), speed);
+    return () => clearTimeout(id);
+  }, [playing, idx, atEnd, speed, mode]);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+      if (e.key === "ArrowRight") { setPlaying(false); setIdx((i) => Math.min(i + 1, steps.length - 1)); }
+      else if (e.key === "ArrowLeft") { setPlaying(false); setIdx((i) => Math.max(i - 1, 0)); }
+      else if (e.key === " ") { e.preventDefault(); setPlaying((p) => !p); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [steps, setIdx]);
+
+  const switchMode = (m) => { setPlaying(false); setMode(m); };
+
+  const runOp = (type) => {
+    const base = pSteps;
+    const t = tracer(base[base.length - 1]);
+    if (type === "push") {
+      let v = parseInt(input, 10);
+      if (Number.isNaN(v)) v = Math.floor(Math.random() * 90) + 10;
+      doPush(t, v, null);
+      setInput(String(v + 10));
+    } else if (type === "pop") doPop(t, null);
+    else if (type === "peek") doPeek(t, null);
+    else doDisplay(t, null);
+    setPSteps([...base, ...t.steps]);
+    setPIdx(base.length);
+    setPlaying(true);
+  };
+
+  const resetPlay = () => { setPlaying(false); setPSteps(initPlay()); setPIdx(0); };
+  const crumbs = step.frame === "main()" ? ["main()"] : ["main()", step.frame];
+
+  return (
+    <div className="app">
+      <header className="top">
+        <div>
+          <h1>Stack using a linked list, line by line</h1>
+          <p className="sub">Watch new nodes get linked in front of top, and popped nodes get released with free(). Last in, first out.</p>
+        </div>
+        <div className="tabs" role="group" aria-label="Mode">
+          <button aria-pressed={mode === "dry"} onClick={() => switchMode("dry")}>Dry run main()</button>
+          <button aria-pressed={mode === "play"} onClick={() => switchMode("play")}>Try it yourself</button>
+        </div>
+      </header>
+
+      <div className="layout">
+        <CodePanel step={step} />
+
+        <div className="right">
+          <div className="panel controls">
+            <button className="btn" onClick={() => { setPlaying(false); setIdx(0); }}>Restart</button>
+            <button className="btn" disabled={idx === 0} onClick={() => { setPlaying(false); setIdx(idx - 1); }}>Prev</button>
+            <button className="btn primary" disabled={atEnd && !playing} onClick={() => setPlaying(!playing)}>{playing ? "Pause" : "Play"}</button>
+            <button className="btn" disabled={atEnd} onClick={() => { setPlaying(false); setIdx(idx + 1); }}>Next</button>
+            <div className="scrub">
+              <input type="range" min="0" max={steps.length - 1} value={idx} aria-label="Step"
+                onChange={(e) => { setPlaying(false); setIdx(+e.target.value); }} />
+              <span className="count">{idx + 1} / {steps.length}</span>
+            </div>
+            <select className="speed" value={speed} onChange={(e) => setSpeed(+e.target.value)} aria-label="Speed">
+              <option value={2000}>Slow</option>
+              <option value={1200}>Normal</option>
+              <option value={600}>Fast</option>
+            </select>
+            {mode === "play" && (
+              <div className="playrow">
+                <input type="number" value={input} onChange={(e) => setInput(e.target.value)} aria-label="Value to push" />
+                <button className="btn push" disabled={lastSize >= LIMIT} onClick={() => runOp("push")}>push({input || "?"})</button>
+                <button className="btn pop" onClick={() => runOp("pop")}>pop()</button>
+                <button className="btn" onClick={() => runOp("peek")}>peek()</button>
+                <button className="btn" onClick={() => runOp("display")}>display()</button>
+                <button className="btn" onClick={resetPlay}>New stack</button>
+                {lastSize >= LIMIT && <span className="limitnote">This demo stops at {LIMIT} nodes so the picture fits. A real linked list has no fixed limit.</span>}
+              </div>
+            )}
+          </div>
+
+          <div className="panel explain" aria-live="polite">
+            <div className="crumbs">
+              {crumbs.map((c, i) => <span key={i} className={"crumb" + (i === crumbs.length - 1 ? " now" : "")}>{c}</span>)}
+              <span className="linetag">{step.line ? `line ${step.line}` : ""}</span>
+            </div>
+            <p className={"note" + (step.tone ? " " + step.tone : "")}>
+              {step.note}
+              {step.cond !== undefined && <span className={"pill " + (step.cond ? "t" : "f")}>{step.cond ? "TRUE" : "FALSE"}</span>}
+            </p>
+            {step.sub && <p className="subnote">{step.sub}</p>}
+          </div>
+
+          <HeapView step={step} />
+
+          <div className="bottom">
+            <Tower step={step} idx={idx} />
+            <VarsConsole step={step} prev={prev} />
+          </div>
+        </div>
+      </div>
+      <footer className="sk-foot sk-nodes"><span className="sk-b"><span>© 2026</span><span className="sk-x" aria-hidden="true">•</span></span><span className="sk-a" aria-hidden="true">→</span><span className="sk-b"><span>Soumik Karmakar</span><span className="sk-x" aria-hidden="true">•</span></span><span className="sk-a" aria-hidden="true">→</span><span className="sk-null" aria-hidden="true">NULL</span></footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
