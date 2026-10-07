@@ -48,7 +48,6 @@ struct Node* pop(struct Node* top) {
     return top;
 }
 
-// Peek operation: shows the top element without deleting it.
 struct Node* peek(struct Node* top) {
     if (top == NULL) {
         printf("Stack is Empty\n");
@@ -59,7 +58,6 @@ struct Node* peek(struct Node* top) {
     return top;
 }
 
-// Displays all nodes in the stack from top to bottom.
 struct Node* display(struct Node* top) {
     if (top == NULL) {
         printf("Stack is Empty\n");
@@ -87,7 +85,6 @@ struct Node* freeStack(struct Node* top) {
 }
 
 int main() {
-    // Example usage of stack operations.
     top = push(top, 1);
     top = push(top, 3);
     top = push(top, 2);
